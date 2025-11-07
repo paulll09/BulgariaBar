@@ -1,10 +1,14 @@
 import React from "react";
 
-export default function CategoryChips({ categorias, activa, onChange }) {
+export default function CategoryChips({ categorias, activa, onChange, sticky = true }) {
   return (
-    <nav className="overflow-x-auto no-scrollbar p-3 bg-black text-white sticky top-0 z-50">
+    <nav
+      className={`overflow-x-auto no-scrollbar p-3 bg-black text-white ${
+        sticky ? "sticky top-0 z-40" : ""
+      }`}
+    >
       <ul className="flex gap-2">
-        {["Todas", ...categorias].map(cat => (
+        {["Todas", ...categorias].map((cat) => (
           <li key={cat}>
             <button
               onClick={() => onChange(cat)}
