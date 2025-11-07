@@ -24,4 +24,20 @@ input, select, textarea, button {
 /* Ajuste general en iOS para que no reescale texto */
 html { -webkit-text-size-adjust: 100%; }
 
+/* Pinta el safe-area inferior de iOS del mismo color que el footer */
+.footer-safe {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); /* más aire sobre el borde */
+  position: relative;
+}
+.footer-safe::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: env(safe-area-inset-bottom);
+  background: #000;            /* mismo color que tu footer */
+  pointer-events: none;        /* no bloquea toques */
+  z-index: 40;                 /* por encima del fondo, debajo de tu botón flotante */
+}
 

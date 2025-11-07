@@ -3,7 +3,7 @@ import { Instagram, MapPin, MessageCircle } from "lucide-react"; // íconos mode
 
 function Footer() {
   return (
-    <footer className="bg-black text-white mt-10 pb-6">
+    <footer className="bg-black text-white mt-10 pb-6 footer-safe">
       <div className="max-w-3xl mx-auto px-6 py-8 flex flex-col items-center text-center gap-4">
         {/* Nombre del bar */}
         <h2
