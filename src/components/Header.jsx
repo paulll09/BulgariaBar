@@ -1,42 +1,61 @@
 import React, { useEffect, useState } from "react";
-import CategoryChips from "./CategoryChips"; // importa tus categorías
+import CategoryChips from "./CategoryChips";
 
-function Header({ categorias, cat, setCat, logo }) {
-  const [scrolled, setScrolled] = useState(false);
+export default function Header({ categorias, cat, setCat, logo }) {
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40);
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Solo aplicar el efecto en pantallas pequeñas
+      if (window.innerWidth < 768) {
+        if (currentScrollY > lastScrollY && currentScrollY > 80) {
+          // Desliza hacia abajo → ocultar
+          setVisible(false);
+        } else {
+          // Desliza hacia arriba → mostrar
+          setVisible(true);
+        }
+      } else {
+        setVisible(true); // en escritorio siempre visible
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   return (
     <header
-      className={`bg-black text-white sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? "py-1" : "py-3"
+      className={`bg-black text-white sticky top-0 z-50 transition-transform duration-300 ${
+        visible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
-      <div className="mx-auto max-w-3xl px-4 flex flex-col items-center justify-center transition-all duration-300">
-        {/* Logo centrado y clickeable */}
-        <a href="/" className="flex items-center justify-center" aria-label="Ir al inicio">
-          <img
-            src={logo}
-            alt="Bulgaria Bar"
-            className={`object-contain w-auto transition-all duration-300 ${
-              scrolled
-                ? "h-16 sm:h-20 md:h-24 scale-95"
-                : "h-28 sm:h-32 md:h-36 scale-100"
-            }`}
-          />
+      <div className="mx-auto max-w-3xl px-4 flex flex-col items-center justify-center">
+        {/* Logo centrado */}
+        <a
+          href="/"
+          aria-label="Ir al inicio"
+          className="block h-20 sm:h-24 md:h-28"
+        >
+          <div className="h-full flex items-center justify-center">
+            <img
+              src={logo}
+              alt="Bulgaria Bar"
+              className="h-full w-auto object-contain max-w-[75vw]"
+            />
+          </div>
         </a>
       </div>
 
       {/* Chips de categorías */}
-      <div className="mt-1">
+      <div className="bg-black">
         <CategoryChips categorias={categorias} activa={cat} onChange={setCat} />
       </div>
     </header>
   );
 }
-
-export default Header;
