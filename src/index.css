@@ -16,4 +16,12 @@ body, p, .body-text {
   font-family: var(--font-body);
 }
 
+/* iOS: evitar auto-zoom al enfocar inputs */
+input, select, textarea, button {
+  font-size: 16px; /* clave */
+}
+
+/* Ajuste general en iOS para que no reescale texto */
+html { -webkit-text-size-adjust: 100%; }
+
 
