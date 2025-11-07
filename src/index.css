@@ -1,0 +1,19 @@
+/* Cargá Tailwind v4 */
+@import "tailwindcss";
+
+/* Tus estilos propios */
+:root {
+  --font-title: "Oswald", sans-serif; /* o Anton o Bebas Neue */
+  --font-body: "Poppins", sans-serif; /* para el cuerpo */
+}
+
+h1, h2, h3, .title {
+  font-family: var(--font-title);
+  text-transform: uppercase;
+}
+
+body, p, .body-text {
+  font-family: var(--font-body);
+}
+
+

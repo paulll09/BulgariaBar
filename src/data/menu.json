@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "nombre": "Hamburguesa Doble",
+    "categoria": "Hamburguesas",
+    "precio": 5500,
+    "img": "/img/hamburguesaDoble1.jpg",
+    "descripcion": "Doble carne, cheddar, lechuga, tomate, cebolla morada y salsa especial"
+  },
+  {
+    "id": 2,
+    "nombre": "Lomito Completo",
+    "categoria": "Lomitos",
+    "precio": 6200,
+    "img": "/img/lomitoTradicional.jpg",
+    "descripcion": "Lomo vacuno, jamón, queso, huevo, lechuga, tomate y mayonesa"
+  },
+  {
+    "id": 3,
+    "nombre": "Pizza Muzza",
+    "categoria": "Pizzas",
+    "precio": 7000,
+    "img": "/img/pizza.jpg",
+    "descripcion": "Mozzarella, orégano, salsa de tomate y aceitunas verdes"
+  },
+  {
+    "id": 4,
+    "nombre": "Coca 500ml",
+    "categoria": "Bebidas",
+    "precio": 1500,
+    "img": "/img/coca500.jpg",
+    "descripcion": "Gaseosa Coca-Cola 500ml retornable"
+  }
+]
