@@ -67,7 +67,7 @@ export default function Home() {
             </section>
 
             {/* Listado de productos */}
-            <main className="mx-auto max-w-3xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white">
+            <main className="mx-auto max-w-md p-4 grid grid-cols-1 gap-6 bg-white sm:max-w-2xl">
                 {listado.map((p, i) => (
                     <ProductCard key={p.id} p={p} onAdd={add} index={i} />
                 ))}
