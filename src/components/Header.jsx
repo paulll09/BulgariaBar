@@ -44,7 +44,7 @@ export default function Header({ logo }) {
             <img
               src={logo}
               alt="Bulgaria Bar"
-              className="h-[130%] w-auto object-contain max-w-[85vw]"
+              className="h-[130%] w-auto object-contain max-w-85vw"
             />
           </div>
         </a>
