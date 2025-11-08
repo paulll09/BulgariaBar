@@ -30,5 +30,14 @@
     "precio": 1500,
     "img": "/img/coca500.jpg",
     "descripcion": "Gaseosa Coca-Cola 500ml retornable"
-  }
+  },
+  {
+  "id": 99,
+  "nombre": "Sandwich clásico",
+  "descripcion": "Jamón, queso, tomate y lechuga en pan artesanal.",
+  "precio": 2500,
+  "imagen": "/img/sandwich.jpg",
+  "categoria": "Sandwiches"
+}
+
 ]

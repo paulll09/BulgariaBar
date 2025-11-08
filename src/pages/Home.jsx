@@ -13,75 +13,76 @@ import logo from "../assets/logo.png";
 import promoImg from "../assets/promociones.png";
 
 export default function Home() {
-  const [cat, setCat] = useState("Todas");
-  const categorias = useMemo(() => [...new Set(menu.map((m) => m.categoria))], []);
-  const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("cart") || "[]"));
-  const [openModal, setOpenModal] = useState(false);
+    const [cat, setCat] = useState("Todas");
+    const categorias = useMemo(() => [...new Set(menu.map((m) => m.categoria))], []);
+    const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("cart") || "[]"));
+    const [openModal, setOpenModal] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
+    useEffect(() => {
+        localStorage.setItem("cart", JSON.stringify(cart));
+    }, [cart]);
 
-  const listado = menu.filter((p) => cat === "Todas" || p.categoria === cat);
+    const listado = menu.filter((p) => cat === "Todas" || p.categoria === cat);
 
-  const add = (p) => {
-    setCart((prev) => {
-      const idx = prev.findIndex((x) => x.id === p.id);
-      if (idx > -1) {
-        const cp = [...prev];
-        cp[idx].cant++;
-        return cp;
-      }
-      return [...prev, { ...p, cant: 1 }];
-    });
-  };
+    const add = (p) => {
+        setCart((prev) => {
+            const idx = prev.findIndex((x) => x.id === p.id);
+            if (idx > -1) {
+                const cp = [...prev];
+                cp[idx].cant++;
+                return cp;
+            }
+            return [...prev, { ...p, cant: 1 }];
+        });
+    };
 
-  return (
-    <>
-      {/* Header negro */}
-      <Header logo={logo} />
+    return (
+        <>
+            {/* Header negro */}
+            <Header logo={logo} />
 
-      {/* Categorías con fondo blanco */}
-      <div className="border-b border-gray-200">
-        <CategoryChips
-          categorias={categorias}
-          activa={cat}
-          onChange={setCat}
-          sticky={false}
-        />
-      </div>
+            {/* Categorías con fondo blanco */}
+            <div className="border-b border-gray-200">
+                <CategoryChips
+                    categorias={categorias}
+                    activa={cat}
+                    onChange={setCat}
+                    sticky={false}
+                />
+            </div>
 
-      {/* 🆕 Sección de Promociones */}
-      <section className="bg-white py-4 px-4">
-        <h2 className="text-xl font-semibold text-center text-gray-800 mb-3">
-          Promociones
-        </h2>
+            {/* 🆕 Sección de Promociones */}
+            <section className="bg-white py-4 px-4">
+                <h2 className="text-xl font-semibold text-center text-gray-800 mb-3">
+                    Promociones
+                </h2>
 
-        <div className="max-w-3xl mx-auto">
-          <img
-            src={promoImg}
-            alt="Promociones del Bar"
-            className="w-full h-auto rounded-xl shadow-md object-cover"
-          />
-        </div>
-      </section>
+                <div className="max-w-3xl mx-auto">
+                    <img
+                        src={promoImg}
+                        alt="Promociones del Bar"
+                        className="w-full h-auto rounded-xl shadow-md object-cover"
+                    />
+                </div>
+            </section>
 
-      {/* Listado de productos */}
-      <main className="mx-auto max-w-3xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white">
-        {listado.map((p) => (
-          <ProductCard key={p.id} p={p} onAdd={add} />
-        ))}
-      </main>
+            {/* Listado de productos */}
+            <main className="mx-auto max-w-3xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white">
+                {listado.map((p, i) => (
+                    <ProductCard key={p.id} p={p} onAdd={add} index={i} />
+                ))}
+            </main>
 
-      <CartBar items={cart} onOpen={() => setOpenModal(true)} />
-      <CustomerModal
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-        items={cart}
-        setCart={setCart}
-      />
 
-      <Footer />
-    </>
-  );
+            <CartBar items={cart} onOpen={() => setOpenModal(true)} />
+            <CustomerModal
+                open={openModal}
+                onClose={() => setOpenModal(false)}
+                items={cart}
+                setCart={setCart}
+            />
+
+            <Footer />
+        </>
+    );
 }
