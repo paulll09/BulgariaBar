@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * CategoryChips mejorado
+ * CategoryChips mejorado .
  * -----------------------
  * - Fondo claro (blanco) debajo del header.
  * - Botones con diseño moderno, suave y agradable.
