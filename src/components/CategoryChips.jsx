@@ -43,7 +43,7 @@ export default function CategoryChips({ categorias, activa, onChange, sticky = t
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 shadow-sm
                 ${
                   activa === cat
-                    ? "bg-black text-white shadow-md scale-105"
+                    ? "bg-red-600 text-white shadow-md scale-105"
                     : "bg-gray-100 text-gray-800 hover:bg-gray-200 hover:shadow-md"
                 }`}
             >
