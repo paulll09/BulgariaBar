@@ -52,19 +52,21 @@ export default function Home() {
             </div>
 
             {/* 🆕 Sección de Promociones */}
-            <section className="bg-white py-4 px-4">
-                <h2 className="text-xl font-semibold text-center text-gray-800 mb-3">
-                    Promociones
-                </h2>
+            {cat === "Todas" && (
+                <section className="bg-white py-4 px-4">
+                    <h2 className="text-xl font-semibold text-center text-gray-800 mb-3">
+                        Promociones
+                    </h2>
+                    <div className="max-w-3xl mx-auto">
+                        <img
+                            src={promoImg}
+                            alt="Promociones del Bar"
+                            className="w-full h-auto rounded-xl shadow-md object-cover"
+                        />
+                    </div>
+                </section>
+            )}
 
-                <div className="max-w-3xl mx-auto">
-                    <img
-                        src={promoImg}
-                        alt="Promociones del Bar"
-                        className="w-full h-auto rounded-xl shadow-md object-cover"
-                    />
-                </div>
-            </section>
 
             {/* Listado de productos */}
             <main className="mx-auto max-w-md p-4 grid grid-cols-1 gap-6 bg-white sm:max-w-2xl">

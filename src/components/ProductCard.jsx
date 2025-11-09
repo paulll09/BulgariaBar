@@ -9,7 +9,7 @@ export default function ProductCard({ p, onAdd, index = 0 }) {
   return (
     <article
       ref={ref}
-      className={`bg-white rounded-3xl shadow-md ring-1 ring-gray-200 overflow-hidden transform transition duration-700 ease-out
+      className={`bg-black text-white rounded-3xl shadow-md ring-1 ring-gray-200 overflow-hidden transform transition duration-700 ease-out
         ${inView ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
       style={{
         transitionDelay: `${Math.min(index * 80, 400)}ms`,
@@ -31,10 +31,10 @@ export default function ProductCard({ p, onAdd, index = 0 }) {
         <h3 className="text-lg font-semibold" style={{ fontFamily: "var(--font-title)" }}>
           {p.nombre}
         </h3>
-        <p className="text-sm text-gray-600 mt-2 line-clamp-2">{p.descripcion}</p>
+        <p className="text-sm text-white mt-2 line-clamp-2">{p.descripcion}</p>
         <button
           onClick={() => onAdd(p)}
-          className="mt-4 w-full py-3 bg-black text-white rounded-xl font-medium active:scale-95 transition-all"
+          className="mt-4 w-full py-3 bg-black text-white border border-white rounded-xl font-medium active:scale-95 transition-all"
         >
           <ShoppingCart className="inline-block w-4 h-4 mr-2" />
           Agregar al pedido
