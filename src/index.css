@@ -41,3 +41,10 @@ html { -webkit-text-size-adjust: 100%; }
   z-index: 40;                 /* por encima del fondo, debajo de tu botón flotante */
 }
 
+/* Suavizar animaciones en móviles */
+@media (max-width: 768px) {
+  .transition {
+    transition-timing-function: ease-out;
+    transition-duration: 0.6s;
+  }
+}

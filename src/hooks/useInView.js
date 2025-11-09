@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-export default function useInView({ root = null, rootMargin = "0px", threshold = 0.15 } = {}) {
+export default function useInView({
+  root = null,
+  rootMargin = "0px 0px -10% 0px",
+  threshold = 0.2,
+  once = true,
+  startupDelay = 120,
+} = {}) {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
 
@@ -8,23 +14,38 @@ export default function useInView({ root = null, rootMargin = "0px", threshold =
     const el = ref.current;
     if (!el) return;
 
-    // Respeta usuarios con motion reducido
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (media.matches) {
       setInView(true);
       return;
     }
 
-    const io = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setInView(true);
-        io.unobserve(entry.target); // solo una vez
-      }
-    }, { root, rootMargin, threshold });
+    let rafId;
+    let timerId;
 
-    io.observe(el);
-    return () => io.disconnect();
-  }, [root, rootMargin, threshold]);
+    const start = () => {
+      const io = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (entry.isIntersecting) {
+            setInView(true);
+            if (once) io.disconnect();
+          }
+        },
+        { root, rootMargin, threshold }
+      );
+      io.observe(el);
+    };
+
+    rafId = requestAnimationFrame(() => {
+      timerId = setTimeout(start, startupDelay);
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+    };
+  }, [root, rootMargin, threshold, once, startupDelay]);
 
   return { ref, inView };
 }

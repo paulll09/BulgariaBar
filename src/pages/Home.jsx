@@ -52,20 +52,25 @@ export default function Home() {
             </div>
 
             {/* 🆕 Sección de Promociones */}
-            {cat === "Todas" && (
-                <section className="bg-white py-4 px-4">
-                    <h2 className="text-xl font-semibold text-center text-gray-800 mb-3">
-                        Promociones
-                    </h2>
-                    <div className="max-w-3xl mx-auto">
-                        <img
-                            src={promoImg}
-                            alt="Promociones del Bar"
-                            className="w-full h-auto rounded-xl shadow-md object-cover"
-                        />
-                    </div>
-                </section>
-            )}
+          {cat === "Todas" && (
+  <section className="bg-white py-4 px-4">
+    <h2 className="text-xl font-semibold text-center text-gray-800 mb-3">Promociones</h2>
+
+    <div className="max-w-3xl mx-auto overflow-hidden rounded-xl shadow-md">
+      <img
+        src={promoImg}
+        alt="Promociones del Bar"
+        className="w-full h-auto object-contain"
+        loading="lazy"
+        decoding="async"
+        width="1200"
+        height="800"
+      />
+    </div>
+  </section>
+)}
+
+            
 
 
             {/* Listado de productos */}
