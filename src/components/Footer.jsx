@@ -1,5 +1,6 @@
 import React from "react";
-import { Instagram, MapPin, MessageCircle } from "lucide-react"; // íconos modernos
+import { Instagram, MapPin } from "lucide-react";
+import WhatsappIcon from "../assets/icons/whatsapp.svg";
 
 function Footer() {
   return (
@@ -20,15 +21,19 @@ function Footer() {
         </div>
 
         {/* Íconos de redes */}
-        <div className="flex gap-6 mt-3">
-          {/* WhatsApp */}
+        <div className="flex gap-6 mt-3 ">
+          {/* WhatsApp moderno */}
           <a
             href="https://wa.me/5493794XXXXXX"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-red-600 transition"
           >
-            <MessageCircle size={26} />
+            <img
+              src={WhatsappIcon}
+              alt="WhatsApp"
+              className="w-7 h-7 transition-transform hover:scale-110"
+            />
           </a>
 
           {/* Instagram */}
@@ -38,7 +43,7 @@ function Footer() {
             rel="noopener noreferrer"
             className="hover:text-red-600 transition"
           >
-            <Instagram size={26} />
+            <Instagram size={27} />
           </a>
         </div>
 
@@ -48,8 +53,7 @@ function Footer() {
         </p>
       </div>
 
-    
-      {/* Franja negra para eliminar borde blanco */}
+      {/* Franja inferior para quitar borde blanco */}
       <div className="h-6 w-full bg-black"></div>
     </footer>
   );

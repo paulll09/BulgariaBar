@@ -167,7 +167,7 @@ export default function CustomerModal({ open, onClose, items, setCart }) {
             </label>
           )}
           <label className="block text-sm">
-            Notas (sin pepino, piso 2, etc.)
+            Notas (sin cebolla, sin tomates, etc.)
             <textarea
               className="mt-1 w-full border rounded px-3 py-2 text-base"
               rows={2}

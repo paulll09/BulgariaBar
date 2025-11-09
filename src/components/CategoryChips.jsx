@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import HamburguesaIcon from "../assets/icons/burger.svg";
 import SandwichIcon from "../assets/icons/sandwich.svg";
-
+import ParaCompartirIcon from "../assets/icons/paraCompartir.svg"
 /**
  * CategoryChips con íconos personalizados 🍔🥪
  * ---------------------------------------------
@@ -26,6 +26,7 @@ export default function CategoryChips({ categorias, activa, onChange, sticky = t
     Pizzas: <Pizza className="w-4 h-4" />,
     Lomitos: <Utensils className="w-4 h-4" />,
     Sandwiches: <img src={SandwichIcon} alt="Sandwich" className="w-5 h-5" />,
+    ParaCompartir: <img src={ParaCompartirIcon} alt="paraCompartir" className="w-5 h-5" />,
   };
 
   return (

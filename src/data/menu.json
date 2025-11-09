@@ -36,8 +36,16 @@
   "nombre": "Sandwich clásico",
   "descripcion": "Jamón, queso, tomate y lechuga en pan artesanal.",
   "precio": 2500,
-  "imagen": "/img/sandwich.jpg",
+  "img": "/img/sandwich.jpg",
   "categoria": "Sandwiches"
+},
+  {
+  "id": 100,
+  "nombre":"Papas Chedar",
+  "descripcion": "Papas fritas,queso cheddar, cebollita de verdeo, panceta frita.",
+  "precio": 5000,
+  "img": "/img/papasCheddar.jpg",
+  "categoria": "ParaCompartir"
 }
 
 ]
