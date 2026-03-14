@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Brand ──────────────────────────────── */
+  --color-primary:      #d90009;
+  --color-primary-dark: #a80007;
+  --color-primary-light: rgba(217, 0, 9, 0.10);
+
+  /* ── Light palette ──────────────────────── */
+  --color-bg:       #ffffff;
+  --color-cream:    #f7f5f1;
+  --color-surface:  #ffffff;
+  --color-surface2: #f4f2ee;
+  --color-border:   rgba(0, 0, 0, 0.07);
+  --color-border2:  rgba(0, 0, 0, 0.13);
+
+  /* ── Text ───────────────────────────────── */
+  --color-text:       #111111;
+  --color-text-muted: #6b6b6b;
+  --color-text-dim:   #aaaaaa;
+
+  /* ── Backwards compat aliases ───────────── */
+  --color-background:   #ffffff;
+  --color-secondary:    #111111;
+  --color-card:         #ffffff;
+  --color-surface-light:#f4f2ee;
+  --color-accent:       #d90009;
+  --color-text-light:   #6b6b6b;
+}
+
+/* ── Base ─────────────────────────────────── */
+*, ::before, ::after {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── Typography ───────────────────────────── */
+.font-display {
+  font-family: 'Oswald', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.font-body {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ── Scrollbar ────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--color-cream); }
+::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 999px; }
+
+/* ── Selection ────────────────────────────── */
+::selection { background: rgba(217, 0, 9, 0.15); }
+
+/* ── Animations ───────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-down {
+  animation: slide-down 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes spring {
+  0%   { opacity: 0; transform: scale(0.7); }
+  65%  { opacity: 1; transform: scale(1.18); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-spring {
+  animation: spring 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes bounce-arrow {
+  0%, 100% { transform: translateY(0);   opacity: 0.5; }
+  50%       { transform: translateY(7px); opacity: 1; }
+}
+.animate-bounce-arrow {
+  animation: bounce-arrow 1.6s ease-in-out infinite;
+}
+
+@keyframes hero-fade-in {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-hero-fade {
+  animation: hero-fade-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes kenburns-right {
+  from { transform: scale(1.04) translateX(0px); }
+  to   { transform: scale(1.12) translateX(16px); }
+}
+@keyframes kenburns-left {
+  from { transform: scale(1.04) translateX(0px); }
+  to   { transform: scale(1.12) translateX(-16px); }
+}
+@keyframes kenburns-hero {
+  from { transform: scale(1.00) translate(0px, 0px); }
+  to   { transform: scale(1.10) translate(-12px, -8px); }
+}
+
+/* ── Reduced motion ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
