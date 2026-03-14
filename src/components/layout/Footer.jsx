@@ -86,7 +86,7 @@ export default function Footer() {
                         <a href="tel:+5491123456789" className="text-sm transition-colors mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}
                             onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.9)'}
                             onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}>
-                            +54 9 11 2345-6789
+                            +54 9 3704915165
                         </a>
                         <a href="mailto:hola@barbulgaria.com" className="text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.5)' }}
                             onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.9)'}
