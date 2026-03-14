@@ -141,12 +141,15 @@ body {
   animation: wiggle 3.5s ease-in-out infinite;
 }
 
-@keyframes fab-pulse {
-  0%, 100% { box-shadow: 0 4px 20px rgba(217,0,9,0.45); }
-  50%       { box-shadow: 0 4px 28px rgba(217,0,9,0.75), 0 0 0 6px rgba(217,0,9,0.15); }
+@keyframes fab-bounce {
+  0%, 100% { transform: translateY(0px); }
+  30%       { transform: translateY(-6px); }
+  50%       { transform: translateY(-2px); }
+  70%       { transform: translateY(-5px); }
+  85%       { transform: translateY(-1px); }
 }
 .animate-fab-pulse {
-  animation: fab-pulse 2.2s ease-in-out infinite;
+  animation: fab-bounce 2s ease-in-out infinite;
 }
 
 @keyframes kenburns-hero {
