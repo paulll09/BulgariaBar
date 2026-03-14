@@ -25,7 +25,7 @@ export default function Menu() {
     const scrollToCategory = (id) => {
         const el = sectionRefs.current[id];
         if (!el) return;
-        const top = el.getBoundingClientRect().top + window.scrollY - 14 - 52 - 8;
+        const top = el.getBoundingClientRect().top + window.scrollY - 14;
         window.scrollTo({ top, behavior: 'smooth' });
         setActiveCategory(id);
     };
@@ -41,7 +41,7 @@ export default function Menu() {
             {/* ── Category Tabs ──────────────────────── */}
             <div
                 className="sticky z-40 bg-bg/95 backdrop-blur-md border-b border-border"
-                style={{ top: '56px', boxShadow: '0 1px 0 rgba(0,0,0,0.05)' }}
+                style={{ top: '0px', boxShadow: '0 1px 0 rgba(0,0,0,0.05)' }}
             >
                 <div
                     ref={tabsRef}

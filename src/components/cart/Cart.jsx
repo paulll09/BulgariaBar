@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import { useCartStore } from '../../store/cartStore';
-import { Minus, Plus, Trash2, ArrowLeft, MessageCircle, User, MapPin, CreditCard, AlignLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Minus, Plus, Trash2, ArrowLeft, MessageCircle, User, MapPin, CreditCard, AlignLeft, Wine } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Cart() {
     const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCartStore();
     const totalPrice = getTotalPrice();
+    const navigate = useNavigate();
+
+    const handleAddDrink = () => {
+        navigate('/');
+        setTimeout(() => {
+            const el = document.getElementById('menu');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
+    };
 
     const [formData, setFormData] = useState({
         name: '',
@@ -136,6 +145,21 @@ export default function Cart() {
                 ))}
             </div>
 
+            {/* Agregar bebida */}
+            <button
+                onClick={handleAddDrink}
+                className="animate-wiggle cursor-pointer w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl mb-7 font-semibold text-sm uppercase tracking-widest transition-all active:scale-95 hover:opacity-90"
+                style={{
+                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                    color: 'rgba(255,255,255,0.92)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                    animationDelay: `${items.length * 55 + 40}ms`,
+                }}
+            >
+                <Wine className="w-4 h-4" style={{ color: '#c084fc' }} />
+                Agregar Bebida
+            </button>
+
             {/* Form */}
             <div
                 className="rounded-2xl p-5 sm:p-7 animate-fade-up"
@@ -222,6 +246,9 @@ export default function Cart() {
                     <p className="text-xs text-center text-text-dim mt-4">
                         Serás redirigido a WhatsApp para confirmar tu pedido.
                     </p>
+                    <p className="text-[11px] text-center text-text-dim mt-1">
+                        * El costo de envío se acuerda aparte.
+                    </p>
                 </div>
 
                 {(formErrors.name || formErrors.address) && (
@@ -241,6 +268,7 @@ export default function Cart() {
                             <span className="text-text-dim text-xs">$</span>
                             <span className="font-display font-bold text-text text-2xl leading-none">{totalPrice.toLocaleString('es-AR')}</span>
                         </div>
+                        <p className="text-[10px] text-text-dim mt-0.5">* Envío aparte</p>
                     </div>
                     <button onClick={handleCheckout}
                         className="cursor-pointer flex-1 bg-primary hover:bg-primary-dark text-white py-3.5 rounded-xl font-semibold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors active:scale-[0.97] shadow-[0_4px_14px_rgba(217,0,9,0.3)]">
