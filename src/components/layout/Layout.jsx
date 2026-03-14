@@ -29,7 +29,7 @@ export default function Layout({ children }) {
                 >
                     <ShoppingCart className="w-6 h-6 text-white" />
                     {totalItems > 0 && (
-                        <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[10px] font-bold text-white bg-text rounded-full border-2 border-bg animate-spring">
+                        <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[10px] font-bold text-white bg-text rounded-full animate-fade-in">
                             {totalItems}
                         </span>
                     )}
