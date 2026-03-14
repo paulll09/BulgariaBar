@@ -188,7 +188,7 @@ export default function Cart() {
                             Dirección <span className="text-primary">*</span>
                         </label>
                         <input type="text" name="address" value={formData.address} onChange={handleChange}
-                            placeholder="Ej: Av. San Martín 1234, Depto 2B" className={inputCls(formErrors.address)} />
+                            placeholder="Ej: Calle Paraguay 1234" className={inputCls(formErrors.address)} />
                     </div>
 
                     <div>
@@ -219,7 +219,7 @@ export default function Cart() {
                             <span className="normal-case tracking-normal font-normal text-text-dim ml-1">(opcional)</span>
                         </label>
                         <textarea name="notes" value={formData.notes} onChange={handleChange}
-                            placeholder="Sin cebolla, timbre no anda..." rows="2"
+                            placeholder="Sin cebolla, sin mayonesa etc..." rows="2"
                             className={`${inputCls(false)} resize-none`} />
                     </div>
                 </div>

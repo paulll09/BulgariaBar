@@ -40,7 +40,7 @@ export default function Footer() {
                             </div>
                         </div>
                         <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                            Las mejores hamburguesas, pizzas y bebidas en Mendoza.
+                            Las mejores hamburguesas, lomitos, pizzas y empanadas.
                         </p>
                         <div className="flex gap-2.5 mt-5">
                             <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full transition-all"
@@ -66,15 +66,15 @@ export default function Footer() {
                             <MapPin className="w-3.5 h-3.5 text-primary" />
                             Dónde estamos
                         </h4>
-                        <p className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Av. San Martín 1234</p>
-                        <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.5)' }}>Ciudad de Mendoza</p>
+                        <p className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Av. San Martín y Curesti</p>
+                        <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.5)' }}>Las Lomitas-Formosa</p>
 
                         <h4 className="flex items-center gap-2 font-semibold text-xs uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.7)' }}>
                             <Clock className="w-3.5 h-3.5 text-primary" />
                             Horarios
                         </h4>
-                        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Mié a Dom: 19:00 — 02:00</p>
-                        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Lun y Mar: Cerrado</p>
+                        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Jueves a Domingo: 20:00 — 00:00</p>
+                        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Lunes a Miercoles: Cerrado</p>
                     </div>
 
                     {/* Contact */}
