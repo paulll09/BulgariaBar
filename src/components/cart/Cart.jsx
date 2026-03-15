@@ -40,14 +40,14 @@ export default function Cart() {
 
     const handleCheckout = () => {
         if (!validate()) return;
-        const phone = "5491123456789";
+        const phone = import.meta.env.VITE_WHATSAPP_PHONE ?? '5493716400743';
         let text = `¡Hola! Soy *${formData.name.trim()}* y quiero hacer el siguiente pedido:\n\n`;
         items.forEach(item => {
             text += `• ${item.quantity}x ${item.name} — $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
         });
         text += `\n*TOTAL: $${totalPrice.toLocaleString('es-AR')}*\n\n`;
         text += `📍 *Dirección:* ${formData.address.trim()}\n`;
-        const labels = { efectivo: 'Efectivo', transferencia: 'Transferencia', mercadopago: 'Mercado Pago' };
+        const labels = { efectivo: 'Efectivo', transferencia: 'Transferencia' };
         text += `💳 *Pago:* ${labels[formData.paymentMethod]}\n`;
         if (formData.notes.trim()) text += `📝 *Aclaraciones:* ${formData.notes.trim()}\n`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
@@ -196,8 +196,8 @@ export default function Cart() {
                             <CreditCard className="w-3.5 h-3.5 text-primary" />
                             Medio de Pago
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {['efectivo', 'transferencia', 'mercadopago'].map((m) => (
+                        <div className="grid grid-cols-2 gap-2">
+                            {['efectivo', 'transferencia'].map((m) => (
                                 <label key={m} className={`cursor-pointer rounded-xl py-3 px-2 text-center transition-all text-[11px] font-semibold uppercase tracking-wide ${
                                     formData.paymentMethod === m
                                         ? 'bg-text text-bg'
@@ -206,7 +206,7 @@ export default function Cart() {
                                 style={formData.paymentMethod !== m ? { boxShadow: '0 0 0 1px rgba(0,0,0,0.08)' } : {}}>
                                     <input type="radio" name="paymentMethod" value={m} checked={formData.paymentMethod === m}
                                         onChange={handleChange} className="hidden" />
-                                    {m === 'mercadopago' ? 'MP' : m}
+                                    {m}
                                 </label>
                             ))}
                         </div>

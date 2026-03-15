@@ -132,6 +132,15 @@ body {
   animation: loader-spin 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+@keyframes loader-bounce {
+  0%, 100% { transform: translateY(0px); }
+  40%       { transform: translateY(-22px); }
+  60%       { transform: translateY(-10px); }
+}
+.animate-loader-bounce {
+  animation: loader-bounce 0.9s ease-in-out infinite;
+}
+
 @keyframes wiggle {
   0%, 85%, 100% { transform: scale(1); }
   90%           { transform: scale(1.03); }

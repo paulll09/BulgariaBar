@@ -1,15 +1,22 @@
 import { useRef, useState, useEffect } from 'react';
-import { dummyCategories, dummyProducts } from '../../data/dummyMenu';
+import { useProducts } from '../../hooks/useProducts';
 import ProductCard from './ProductCard';
 
 export default function Menu() {
-    const [activeCategory, setActiveCategory] = useState(dummyCategories[0]?.id);
+    const { products, categories, loading } = useProducts(false);
+    const [activeCategory, setActiveCategory] = useState(null);
     const sectionRefs = useRef({});
     const tabsRef = useRef(null);
 
     useEffect(() => {
+        if (categories.length > 0 && !activeCategory) {
+            setActiveCategory(categories[0]?.id);
+        }
+    }, [categories]);
+
+    useEffect(() => {
         const observers = [];
-        dummyCategories.forEach((cat) => {
+        categories.forEach((cat) => {
             const el = sectionRefs.current[cat.id];
             if (!el) return;
             const obs = new IntersectionObserver(
@@ -20,7 +27,7 @@ export default function Menu() {
             observers.push(obs);
         });
         return () => observers.forEach((o) => o.disconnect());
-    }, []);
+    }, [categories]);
 
     const scrollToCategory = (id) => {
         const el = sectionRefs.current[id];
@@ -48,7 +55,7 @@ export default function Menu() {
                     className="flex gap-2 px-4 sm:px-6 py-2.5 overflow-x-auto"
                     style={{ scrollbarWidth: 'none' }}
                 >
-                    {dummyCategories.map((cat) => {
+                    {categories.map((cat) => {
                         const active = activeCategory === cat.id;
                         return (
                             <button
@@ -71,38 +78,44 @@ export default function Menu() {
 
             {/* ── Sections ──────────────────────────── */}
             <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col gap-12 pt-10">
-                {dummyCategories.map((cat, catIdx) => {
-                    const products = dummyProducts.filter(p => p.category_id === cat.id);
-                    if (products.length === 0) return null;
+                {loading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="rounded-2xl bg-surface animate-pulse h-48" />
+                        ))}
+                    </div>
+                ) : (
+                    categories.map((cat) => {
+                        const catProducts = products.filter(p => p.category_id === cat.id);
+                        if (catProducts.length === 0) return null;
 
-                    return (
-                        <section
-                            key={cat.id}
-                            ref={(el) => { sectionRefs.current[cat.id] = el; }}
-                        >
-                            {/* Section header */}
-                            <div className="flex items-center gap-4 mb-6">
-                                <h2 className="font-display font-semibold text-text text-2xl sm:text-3xl uppercase shrink-0">
-                                    {cat.name}
-                                </h2>
-                                <div className="flex-1 h-px bg-border" />
-                            </div>
+                        return (
+                            <section
+                                key={cat.id}
+                                ref={(el) => { sectionRefs.current[cat.id] = el; }}
+                            >
+                                <div className="flex items-center gap-4 mb-6">
+                                    <h2 className="font-display font-semibold text-text text-2xl sm:text-3xl uppercase shrink-0">
+                                        {cat.name}
+                                    </h2>
+                                    <div className="flex-1 h-px bg-border" />
+                                </div>
 
-                            {/* Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                                {products.map((product, pIdx) => (
-                                    <div
-                                        key={product.id}
-                                        className="animate-fade-up"
-                                        style={{ animationDelay: `${pIdx * 70}ms` }}
-                                    >
-                                        <ProductCard product={product} />
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    );
-                })}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                                    {catProducts.map((product, pIdx) => (
+                                        <div
+                                            key={product.id}
+                                            className="animate-fade-up"
+                                            style={{ animationDelay: `${pIdx * 70}ms` }}
+                                        >
+                                            <ProductCard product={product} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        );
+                    })
+                )}
             </div>
         </div>
     );

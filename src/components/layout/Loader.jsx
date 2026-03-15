@@ -18,12 +18,15 @@ export default function Loader() {
                 pointerEvents: hiding ? 'none' : 'all',
             }}
         >
-            <img
-                src="/images/logo.png"
-                alt="Bulgaria"
-                className="w-24 h-24 object-contain animate-loader-spin"
-                draggable="false"
-            />
+            <div className="flex flex-col items-center">
+                <img
+                    src="/images/logo.png"
+                    alt="Bulgaria"
+                    className="w-24 h-24 object-contain animate-loader-bounce"
+                    draggable="false"
+                />
+                <p className="mt-5 text-white/50 text-xs font-display tracking-[0.35em] uppercase">Cargando Menú</p>
+            </div>
         </div>
     );
 }
