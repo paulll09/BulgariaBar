@@ -7,7 +7,7 @@ import { useCartStore } from '../../store/cartStore';
 export default function Layout({ children }) {
     const totalItems = useCartStore((state) => state.getTotalItems());
     const { pathname } = useLocation();
-    const showFab = pathname !== '/cart';
+    const showFab = pathname !== '/cart' && !pathname.startsWith('/admin');
 
     return (
         <div className="relative min-h-screen flex flex-col bg-background text-text selection:bg-primary/20 selection:text-secondary">

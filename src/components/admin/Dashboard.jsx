@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { LogOut, Package, Tags } from 'lucide-react';
+import { useProducts } from '../../hooks/useProducts';
+import { LogOut, Package, Tags, Clock } from 'lucide-react';
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    const { products, loading } = useProducts(true);
+    const visibleCount = products.filter(p => p.visible).length;
+    const hiddenCount = products.length - visibleCount;
 
     const handleLogout = async () => {
-        if (import.meta.env.VITE_SUPABASE_URL) {
-            await supabase.auth.signOut();
-        }
+        await supabase.auth.signOut();
         navigate('/admin');
     };
 
@@ -28,18 +31,28 @@ export default function Dashboard() {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <DashboardCard
                     icon={<Package className="w-7 h-7 text-primary" />}
                     title="Productos"
-                    description="Añade, edita o elimina platos y bebidas del menú."
+                    description={
+                        loading
+                            ? 'Cargando...'
+                            : `${products.length} productos · ${visibleCount} visibles${hiddenCount > 0 ? ` · ${hiddenCount} ocultos` : ''}`
+                    }
                     onClick={() => navigate('/admin/products')}
                 />
                 <DashboardCard
                     icon={<Tags className="w-7 h-7 text-primary" />}
                     title="Categorías"
                     description="Gestiona las categorías del menú."
-                    onClick={() => { }}
+                    onClick={() => navigate('/admin/categories')}
+                />
+                <DashboardCard
+                    icon={<Clock className="w-7 h-7 text-primary" />}
+                    title="Horarios"
+                    description="Configurá los días y horarios de apertura del bar."
+                    onClick={() => navigate('/admin/hours')}
                 />
             </div>
         </div>
