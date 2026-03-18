@@ -1,16 +1,25 @@
+import { useContext, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
+import { BarCtx } from '../../context/barCtx';
+
+const LOADER_DURATION = 1900;
 
 export default function HeroSection() {
+    const { appLoading } = useContext(BarCtx);
+    const hadLoader = useRef(appLoading).current;
+    const d = (base) => `${hadLoader ? LOADER_DURATION + base : base}ms`;
+
     const scrollToMenu = () => {
         document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     return (
         <section
-            className="relative w-full overflow-hidden flex flex-col items-center justify-center"
-            style={{ height: '100dvh', contain: 'layout style' }}
+            className="relative w-full overflow-hidden flex flex-col items-center justify-center bg-black"
+            style={{ minHeight: '100svh', height: '100dvh', contain: 'layout style' }}
         >
-            {/* Imagen de fondo con Ken Burns — GPU-accelerated */}
+            {/* Imagen de fondo — reveal inmediato (el loader lo cubre mientras dura) */}
             <div
                 style={{
                     position: 'absolute',
@@ -18,11 +27,11 @@ export default function HeroSection() {
                     backgroundImage: "url('/images/bulhero2.jpeg')",
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    animation: 'kenburns-hero 20s ease-in-out infinite alternate',
-                    willChange: 'transform',
+                    animation: 'hero-bg-reveal 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
                     isolation: 'isolate',
+                    opacity: 0,
                 }}
             />
 
@@ -42,18 +51,18 @@ export default function HeroSection() {
                 <img
                     src="/images/logo.png"
                     alt="Bar Bulgaria"
-                    className="animate-hero-fade w-20 sm:w-24 h-auto object-contain drop-shadow-2xl"
-                    style={{ animationDelay: '80ms' }}
+                    className="animate-hero-logo w-20 sm:w-24 h-auto object-contain drop-shadow-2xl"
+                    style={{ animationDelay: d(500) }}
                     draggable="false"
                     loading="eager"
                     decoding="async"
                 />
 
                 <h1
-                    className="animate-hero-fade font-display font-bold text-white uppercase leading-none"
+                    className="animate-hero-title font-display font-bold text-white uppercase leading-none"
                     style={{
                         fontSize: 'clamp(3.4rem, 15vw, 6.5rem)',
-                        animationDelay: '200ms',
+                        animationDelay: d(680),
                         textShadow: '0 2px 24px rgba(0,0,0,0.55)',
                     }}
                 >
@@ -62,31 +71,37 @@ export default function HeroSection() {
 
                 <p
                     className="animate-hero-fade text-white/60 text-[11px] sm:text-xs uppercase tracking-[0.45em] font-semibold"
-                    style={{ animationDelay: '320ms' }}
+                    style={{ animationDelay: d(860) }}
                 >
                     Bar &amp; Cocina
                 </p>
 
-                <button
-                    onClick={scrollToMenu}
-                    className="animate-hero-fade cursor-pointer mt-4 bg-primary hover:bg-primary-dark text-white font-semibold text-xs uppercase tracking-widest px-7 py-3 rounded-full transition-colors duration-200 active:scale-95"
-                    style={{
-                        animationDelay: '440ms',
-                        boxShadow: '0 4px 20px rgba(217,0,9,0.45)',
-                    }}
-                >
-                    Ver el Menú
-                </button>
+                <div className="animate-hero-fade flex flex-col sm:flex-row items-center gap-3 mt-4" style={{ animationDelay: d(1020) }}>
+                    <button
+                        onClick={scrollToMenu}
+                        className="cursor-pointer bg-primary hover:bg-primary-dark text-white font-semibold text-xs uppercase tracking-widest px-7 py-3 rounded-full transition-colors duration-200 active:scale-95"
+                        style={{ boxShadow: '0 4px 20px rgba(217,0,9,0.45)' }}
+                    >
+                        Ver el Menú
+                    </button>
+                    <Link
+                        to="/reserva"
+                        className="bg-primary hover:bg-primary-dark text-white font-semibold text-xs uppercase tracking-widest px-7 py-3 rounded-full transition-colors duration-200 active:scale-95"
+                        style={{ boxShadow: '0 4px 20px rgba(217,0,9,0.45)' }}
+                    >
+                        Realizar Reserva
+                    </Link>
+                </div>
             </div>
 
-            {/* Flecha bounce */}
+            {/* Flecha roja animada */}
             <button
                 onClick={scrollToMenu}
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce-arrow cursor-pointer text-white/40 hover:text-white/70 transition-colors"
-                style={{ zIndex: 3 }}
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce-arrow cursor-pointer transition-opacity hover:opacity-100"
+                style={{ zIndex: 3, opacity: 0.85 }}
                 aria-label="Ir al menú"
             >
-                <ChevronDown className="w-6 h-6" />
+                <ChevronDown className="w-7 h-7" style={{ color: '#d90009' }} strokeWidth={2.5} />
             </button>
         </section>
     );

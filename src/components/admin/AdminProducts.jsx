@@ -1,4 +1,5 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit2, Trash2, Eye, EyeOff, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -6,7 +7,30 @@ import { useProducts } from '../../hooks/useProducts';
 import toast from 'react-hot-toast';
 import { inputCls } from '../../utils/styles';
 
-const EMPTY_FORM = { name: '', description: '', price: '', category_id: '', image_url: '' };
+/* ── Resize image to 800x600 (cover + center crop) ── */
+function resizeImage(file) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            URL.revokeObjectURL(img.src);
+            const W = 800, H = 600;
+            const scale = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+            const sw = W / scale, sh = H / scale;
+            const sx = (img.naturalWidth - sw) / 2;
+            const sy = (img.naturalHeight - sh) / 2;
+            const canvas = document.createElement('canvas');
+            canvas.width = W; canvas.height = H;
+            canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+            canvas.toBlob((blob) => {
+                resolve(blob ? new File([blob], `product-${Date.now()}.jpg`, { type: 'image/jpeg' }) : null);
+            }, 'image/jpeg', 0.92);
+        };
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+
+const EMPTY_FORM = { name: '', description: '', price: '', category_id: '', image_url: '', discount: 0 };
 
 export default function AdminProducts() {
     const navigate = useNavigate();
@@ -22,8 +46,34 @@ export default function AdminProducts() {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef = useRef(null);
+    const formRef = useRef(null);
+
+    const scrollYRef = useRef(0);
+
+    const lockScroll = () => {
+        scrollYRef.current = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollYRef.current}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.overflow = 'hidden';
+    };
+
+    const unlockScroll = () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollYRef.current);
+    };
+
+    useEffect(() => {
+        if (modalOpen && formRef.current) formRef.current.scrollTop = 0;
+    }, [modalOpen]);
 
     const openCreate = () => {
+        lockScroll();
         setEditing(null);
         setForm(EMPTY_FORM);
         setImageFile(null);
@@ -32,6 +82,7 @@ export default function AdminProducts() {
     };
 
     const openEdit = (product) => {
+        lockScroll();
         setEditing(product);
         setForm({
             name: product.name,
@@ -39,6 +90,7 @@ export default function AdminProducts() {
             price: product.price,
             category_id: product.category_id || '',
             image_url: product.image_url || '',
+            discount: product.discount || 0,
         });
         setImageFile(null);
         setImagePreview(product.image_url || null);
@@ -46,18 +98,29 @@ export default function AdminProducts() {
     };
 
     const closeModal = () => {
+        unlockScroll();
         setModalOpen(false);
         setEditing(null);
         setForm(EMPTY_FORM);
         setImageFile(null);
-        setImagePreview(null);
+        setImagePreview(prev => {
+            if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+            return null;
+        });
     };
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        setImageFile(file);
-        setImagePreview(URL.createObjectURL(file));
+        e.target.value = '';
+        const resized = await resizeImage(file);
+        if (resized) {
+            setImagePreview(prev => {
+                if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                return URL.createObjectURL(resized);
+            });
+            setImageFile(resized);
+        }
     };
 
     const uploadImage = async (file) => {
@@ -100,6 +163,7 @@ export default function AdminProducts() {
                 price: parseFloat(form.price),
                 category_id: form.category_id,
                 image_url: imageUrl || null,
+                discount: parseInt(form.discount) || 0,
             };
 
             if (editing) {
@@ -204,7 +268,15 @@ export default function AdminProducts() {
                                 <div className="flex-1 min-w-0">
                                     <p className="font-semibold text-text text-sm truncate">{product.name}</p>
                                     {catName && <p className="text-text-muted text-xs truncate">{catName}</p>}
-                                    <p className="text-primary font-bold text-sm mt-0.5">${Number(product.price).toLocaleString('es-AR')}</p>
+                                    {product.discount > 0 ? (
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            <span className="text-primary font-bold text-sm">${Math.round(product.price * (1 - product.discount / 100)).toLocaleString('es-AR')}</span>
+                                            <span className="text-text-dim text-xs line-through">${Number(product.price).toLocaleString('es-AR')}</span>
+                                            <span className="text-[10px] font-bold text-primary">-{product.discount}%</span>
+                                        </div>
+                                    ) : (
+                                        <p className="text-primary font-bold text-sm mt-0.5">${Number(product.price).toLocaleString('es-AR')}</p>
+                                    )}
                                 </div>
 
                                 {/* Actions */}
@@ -277,8 +349,16 @@ export default function AdminProducts() {
                                         <td className="p-4 text-text-muted text-sm">
                                             {categoryMap.get(product.category_id) || '—'}
                                         </td>
-                                        <td className="p-4 font-bold text-primary text-sm">
-                                            ${Number(product.price).toLocaleString('es-AR')}
+                                        <td className="p-4">
+                                            {product.discount > 0 ? (
+                                                <div>
+                                                    <span className="font-bold text-primary text-sm">${Math.round(product.price * (1 - product.discount / 100)).toLocaleString('es-AR')}</span>
+                                                    <span className="text-text-dim text-xs line-through ml-1.5">${Number(product.price).toLocaleString('es-AR')}</span>
+                                                    <span className="text-[10px] font-bold text-primary ml-1">-{product.discount}%</span>
+                                                </div>
+                                            ) : (
+                                                <span className="font-bold text-primary text-sm">${Number(product.price).toLocaleString('es-AR')}</span>
+                                            )}
                                         </td>
                                         <td className="p-4 text-center">
                                             <button onClick={() => handleToggleVisible(product)}
@@ -306,122 +386,190 @@ export default function AdminProducts() {
                 </div>
             </div>
 
-            {/* ── Modal / Bottom Sheet ── */}
-            {modalOpen && (
-                <div
-                    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-                    style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-                    onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
-                >
-                    <div className="bg-background w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl border border-border shadow-2xl animate-fade-up max-h-[92dvh] flex flex-col">
+            {/* ── Product Form — Full Screen (portal to escape animate-fade-up transform) ── */}
+            {modalOpen && createPortal(
+                <div style={{ position: 'fixed', inset: 0, zIndex: 50, overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--color-background, #fff)' }}>
 
-                        {/* Drag handle — mobile only */}
-                        <div className="sm:hidden flex justify-center pt-3 pb-1">
-                            <div className="w-10 h-1 rounded-full bg-border" />
-                        </div>
-
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                    {/* Sticky header */}
+                    <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--color-background, #fff)', borderBottom: '1px solid var(--color-border, #e5e5e5)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
                             <h2 className="font-display text-lg font-black text-secondary uppercase tracking-wider">
                                 {editing ? 'Editar Producto' : 'Nuevo Producto'}
                             </h2>
-                            <button onClick={closeModal}
+                            <button type="button" onClick={closeModal}
                                 className="cursor-pointer p-2 rounded-xl text-text-muted hover:text-text hover:bg-surface transition-all active:scale-90">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
+                    </div>
 
-                        {/* Form — scrollable */}
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-5 py-5 overflow-y-auto">
+                    {/* Form — just normal document flow, scrolls with parent */}
+                    <form ref={formRef} onSubmit={handleSubmit} style={{ maxWidth: '480px', margin: '0 auto', padding: '20px 20px calc(20px + env(safe-area-inset-bottom))' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-                            {/* Image upload */}
-                            <div>
-                                <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Imagen</label>
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="cursor-pointer relative w-full h-40 rounded-xl border-2 border-dashed border-border active:border-primary/60 transition-colors flex items-center justify-center overflow-hidden bg-surface"
-                                >
-                                    {imagePreview ? (
-                                        <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 text-text-muted">
-                                            <Upload className="w-7 h-7" />
-                                            <span className="text-sm font-medium">Tocar para subir foto</span>
-                                        </div>
-                                    )}
+                                {/* Image upload — compact */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Imagen</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="cursor-pointer w-full rounded-xl border-2 border-dashed border-border hover:border-primary/40 active:border-primary/60 transition-colors overflow-hidden bg-surface"
+                                        style={{ aspectRatio: '4 / 3' }}
+                                    >
+                                        {imagePreview ? (
+                                            <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full gap-2 text-text-muted">
+                                                <Upload className="w-7 h-7" />
+                                                <span className="text-sm font-medium">Tocar para subir foto</span>
+                                                <span className="text-xs text-text-dim">Se ajusta a 4:3 automáticamente</span>
+                                            </div>
+                                        )}
+                                    </button>
                                     {imagePreview && (
-                                        <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-lg font-medium">
-                                            Cambiar
-                                        </div>
+                                        <button type="button" onClick={() => fileInputRef.current?.click()}
+                                            className="cursor-pointer mt-2 text-xs text-primary font-semibold hover:underline">
+                                            Cambiar foto
+                                        </button>
                                     )}
+                                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} />
                                 </div>
-                                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} />
-                            </div>
 
-                            {/* Name */}
-                            <div>
-                                <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
-                                    Nombre <span className="text-primary">*</span>
-                                </label>
-                                <input type="text" value={form.name}
-                                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                    placeholder="Ej: Doble Burger"
-                                    className={inputCls} />
-                            </div>
-
-                            {/* Description */}
-                            <div>
-                                <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Descripción</label>
-                                <textarea value={form.description}
-                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                                    placeholder="Ej: Doble carne, doble queso..."
-                                    rows="2"
-                                    className={`${inputCls} resize-none`} />
-                            </div>
-
-                            {/* Price + Category */}
-                            <div className="grid grid-cols-2 gap-3">
+                                {/* Name */}
                                 <div>
                                     <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
-                                        Precio <span className="text-primary">*</span>
+                                        Nombre <span className="text-primary">*</span>
                                     </label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim text-sm">$</span>
-                                        <input type="number" min="0" step="100" value={form.price}
-                                            onChange={(e) => setForm({ ...form, price: e.target.value })}
-                                            placeholder="8500"
-                                            className={`${inputCls} pl-7`} />
+                                    <input type="text" value={form.name}
+                                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                        placeholder="Ej: Doble Burger"
+                                        className={inputCls} />
+                                </div>
+
+                                {/* Description */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Descripción</label>
+                                    <textarea value={form.description}
+                                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                                        placeholder="Ej: Doble carne, doble queso..."
+                                        rows="2"
+                                        className={`${inputCls} resize-none`} />
+                                </div>
+
+                                {/* Price + Category */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
+                                            Precio <span className="text-primary">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim text-sm">$</span>
+                                            <input type="number" min="0" step="100" value={form.price}
+                                                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                                                placeholder="8500"
+                                                className={`${inputCls} pl-7`} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
+                                            Categoría <span className="text-primary">*</span>
+                                        </label>
+                                        <select value={form.category_id}
+                                            onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+                                            className={inputCls}>
+                                            <option value="">Elegir...</option>
+                                            {categories.map((c) => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
+
+                                {/* Discount */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
-                                        Categoría <span className="text-primary">*</span>
-                                    </label>
-                                    <select value={form.category_id}
-                                        onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-                                        className={inputCls}>
-                                        <option value="">Elegir...</option>
-                                        {categories.map((c) => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
+                                    <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Descuento</label>
+                                    <div className="relative">
+                                        <input type="number" min="0" max="100" step="1" value={form.discount}
+                                            onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                                            placeholder="0"
+                                            className={`${inputCls} pr-8`} />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim text-sm font-semibold">%</span>
+                                    </div>
+                                </div>
+
+                                {/* Live preview label */}
+                                {(form.name || imagePreview) && (
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Así se verá en el menú</label>
+                                        <div
+                                            className="flex flex-col overflow-hidden rounded-2xl bg-cream pointer-events-none"
+                                            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.07)' }}
+                                        >
+                                            <div className="relative w-full aspect-[4/3] overflow-hidden bg-surface2">
+                                                {imagePreview ? (
+                                                    <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-surface2" />
+                                                )}
+                                                {parseInt(form.discount) > 0 && parseInt(form.discount) <= 100 && (
+                                                    <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md">
+                                                        -{parseInt(form.discount)}%
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="px-4 pt-3 pb-3.5">
+                                                <h3 className="font-display font-semibold text-text uppercase leading-tight text-[1rem]">
+                                                    {form.name || 'Nombre'}
+                                                </h3>
+                                                {form.description && (
+                                                    <p className="text-text-muted text-[12px] leading-snug line-clamp-2 mt-1">{form.description}</p>
+                                                )}
+                                                <div className="flex items-center justify-between pt-3">
+                                                    {parseInt(form.discount) > 0 && parseInt(form.discount) <= 100 && form.price ? (
+                                                        <div className="flex flex-col">
+                                                            <div className="flex items-baseline gap-1">
+                                                                <span className="text-text-dim text-xs font-semibold">$</span>
+                                                                <span className="font-display font-bold text-primary text-xl leading-none">
+                                                                    {Math.round(Number(form.price) * (1 - parseInt(form.discount) / 100)).toLocaleString('es-AR')}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-text-dim text-xs line-through mt-0.5">
+                                                                ${Number(form.price).toLocaleString('es-AR')}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-text-dim text-xs font-semibold">$</span>
+                                                            <span className="font-display font-bold text-text text-xl leading-none">
+                                                                {form.price ? Number(form.price).toLocaleString('es-AR') : '0'}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <span className="flex items-center gap-1.5 bg-primary text-white text-[10px] font-semibold uppercase tracking-wider px-3 py-2 rounded-full">
+                                                        <Plus className="w-3 h-3" strokeWidth={2.5} />
+                                                        Agregar
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Submit buttons */}
+                                <div className="flex gap-3 pt-1 pb-4">
+                                    <button type="button" onClick={closeModal}
+                                        className="cursor-pointer flex-1 py-3 rounded-xl border border-border text-text-muted font-semibold text-sm active:scale-95 transition-all">
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" disabled={formLoading}
+                                        className="cursor-pointer flex-1 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-60 shadow-[0_4px_14px_rgba(217,0,9,0.2)]">
+                                        {formLoading ? 'Guardando...' : editing ? 'Guardar' : 'Crear'}
+                                    </button>
                                 </div>
                             </div>
-
-                            {/* Submit */}
-                            <div className="flex gap-3 pt-1 pb-2">
-                                <button type="button" onClick={closeModal}
-                                    className="cursor-pointer flex-1 py-3 rounded-xl border border-border text-text-muted font-semibold text-sm active:scale-95 transition-all">
-                                    Cancelar
-                                </button>
-                                <button type="submit" disabled={formLoading}
-                                    className="cursor-pointer flex-1 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-60 shadow-[0_4px_14px_rgba(217,0,9,0.2)]">
-                                    {formLoading ? 'Guardando...' : editing ? 'Guardar' : 'Crear'}
-                                </button>
-                            </div>
                         </form>
-                    </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
