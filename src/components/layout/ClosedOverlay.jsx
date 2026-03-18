@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { OverlayCtx } from '../../context/overlayCtx';
 
 const DAY_LABELS_ES = {
     monday: 'Lunes', tuesday: 'Martes', wednesday: 'Miércoles',
@@ -11,12 +13,21 @@ export default function ClosedOverlay({ schedule }) {
     const [dismissed, setDismissed] = useState(
         () => sessionStorage.getItem(SESSION_KEY) === '1'
     );
+    const { setActive } = useContext(OverlayCtx);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const alreadyDismissed = sessionStorage.getItem(SESSION_KEY) === '1';
+        if (!alreadyDismissed) setActive(true);
+        return () => setActive(false);
+    }, [setActive]);
 
     if (dismissed) return null;
 
     const handleDismiss = () => {
         sessionStorage.setItem(SESSION_KEY, '1');
         setDismissed(true);
+        setActive(false);
     };
 
     const rows = DAY_ORDER.map((key) => {
@@ -75,13 +86,21 @@ export default function ClosedOverlay({ schedule }) {
                     ))}
                 </div>
 
-                {/* CTA */}
-                <button
-                    onClick={handleDismiss}
-                    className="cursor-pointer w-full py-3.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-bold uppercase tracking-widest transition-all active:scale-95 animate-wiggle shadow-[0_4px_20px_rgba(217,0,9,0.35)]"
-                >
-                    Ver menú de todas formas →
-                </button>
+                {/* CTAs */}
+                <div className="w-full flex flex-col gap-3">
+                    <button
+                        onClick={handleDismiss}
+                        className="cursor-pointer w-full py-3.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-bold uppercase tracking-widest transition-all active:scale-95 animate-wiggle shadow-[0_4px_20px_rgba(217,0,9,0.35)]"
+                    >
+                        Ver menú de todas formas →
+                    </button>
+                    <button
+                        onClick={() => { handleDismiss(); navigate('/reserva'); }}
+                        className="cursor-pointer w-full py-3.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-bold uppercase tracking-widest transition-all active:scale-95 shadow-[0_4px_20px_rgba(217,0,9,0.35)]"
+                    >
+                        Realizar Reserva
+                    </button>
+                </div>
             </div>
         </div>
     );

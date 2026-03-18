@@ -25,7 +25,14 @@ export default function Loader() {
                     className="w-24 h-24 object-contain animate-loader-bounce"
                     draggable="false"
                 />
-                <p className="mt-5 text-white/50 text-xs font-display tracking-[0.35em] uppercase">Cargando Menú</p>
+                <p className="mt-5 text-white/50 text-xs font-display tracking-[0.35em] uppercase flex items-end gap-0.5">
+                    Cargando Menú
+                    <span className="flex gap-[3px] ml-1 mb-[1px]">
+                        <span className="animate-dot-1">.</span>
+                        <span className="animate-dot-2">.</span>
+                        <span className="animate-dot-3">.</span>
+                    </span>
+                </p>
             </div>
         </div>
     );

@@ -25,8 +25,8 @@ export default function Navbar() {
                 className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
                 style={
                     transparent
-                        ? { background: 'transparent', borderBottom: '1px solid transparent', boxShadow: 'none' }
-                        : { background: 'rgba(255,255,255,0.96)', borderBottom: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 1px 0 rgba(0,0,0,0.06)', backdropFilter: 'blur(12px)' }
+                        ? { background: 'transparent', borderBottom: '1px solid transparent', boxShadow: 'none', paddingTop: 'env(safe-area-inset-top)' }
+                        : { background: 'rgba(255,255,255,0.96)', borderBottom: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 1px 0 rgba(0,0,0,0.06)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', paddingTop: 'env(safe-area-inset-top)' }
                 }
             >
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
@@ -73,7 +73,7 @@ export default function Navbar() {
             </nav>
 
             {/* Spacer on non-home pages only */}
-            {!isHome && <div className="h-14" />}
+            {!isHome && <div style={{ height: 'calc(3.5rem + env(safe-area-inset-top))' }} />}
         </>
     );
 }

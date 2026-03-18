@@ -1,11 +1,12 @@
+import { useContext } from 'react';
 import HeroSection from '../components/layout/HeroSection';
 import Menu from '../components/menu/Menu';
 import ClosedOverlay from '../components/layout/ClosedOverlay';
-import { useSchedule } from '../hooks/useSchedule';
+import { BarCtx } from '../context/barCtx';
 
 export default function HomePage() {
-    const { schedule, loading, isOpen } = useSchedule();
-    const showOverlay = !loading && !isOpen && schedule !== null;
+    const { isOpen, schedule } = useContext(BarCtx);
+    const showOverlay = !isOpen && schedule !== null;
 
     return (
         <>

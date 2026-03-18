@@ -8,6 +8,10 @@ import ScrollToTop from './components/layout/ScrollToTop';
 import Loader from './components/layout/Loader';
 import HomePage from './pages/HomePage';
 import Cart from './components/cart/Cart';
+import ReservationPage from './pages/ReservationPage';
+import { OverlayCtx } from './context/overlayCtx';
+import { BarCtx } from './context/barCtx';
+import { useSchedule } from './hooks/useSchedule';
 
 const Login = lazy(() => import('./components/admin/Login'));
 const Dashboard = lazy(() => import('./components/admin/Dashboard'));
@@ -27,8 +31,13 @@ function ProtectedRoute({ children }) {
   }, []);
 
   if (status === 'checking') return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-pulse">
+      <div className="h-8 w-48 bg-gray-200 rounded-lg mb-6" />
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="h-14 bg-gray-100 rounded-xl" />
+        ))}
+      </div>
     </div>
   );
   if (status === 'denied') return null;
@@ -36,13 +45,20 @@ function ProtectedRoute({ children }) {
 }
 
 const AdminFallback = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-pulse">
+    <div className="h-8 w-48 bg-gray-200 rounded-lg mb-6" />
+    <div className="space-y-4">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="h-14 bg-gray-100 rounded-xl" />
+      ))}
+    </div>
   </div>
 );
 
 function App() {
   const [loading, setLoading] = useState(true);
+  const [overlayActive, setOverlayActive] = useState(false);
+  const { isOpen, schedule } = useSchedule();
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 2200);
@@ -50,6 +66,8 @@ function App() {
   }, []);
 
   return (
+    <BarCtx.Provider value={{ isOpen, schedule, appLoading: loading }}>
+    <OverlayCtx.Provider value={{ active: overlayActive, setActive: setOverlayActive }}>
     <BrowserRouter>
       {loading && <Loader />}
       <ScrollToTop />
@@ -58,6 +76,7 @@ function App() {
         <Suspense fallback={<AdminFallback />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/reserva" element={<ReservationPage />} />
             <Route path="/cart" element={
               <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
                 <Cart />
@@ -92,8 +111,10 @@ function App() {
         </Suspense>
         </AdminErrorBoundary>
       </Layout>
-      <Toaster position="bottom-center" />
+      <Toaster position="top-center" />
     </BrowserRouter>
+    </OverlayCtx.Provider>
+    </BarCtx.Provider>
   );
 }
 

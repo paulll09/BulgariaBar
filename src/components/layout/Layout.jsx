@@ -1,22 +1,32 @@
+import { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import Footer from './Footer';
-import PatternBackground from './PatternBackground';
 import { useCartStore } from '../../store/cartStore';
+import { OverlayCtx } from '../../context/overlayCtx';
+import { BarCtx } from '../../context/barCtx';
 
 export default function Layout({ children }) {
     const totalItems = useCartStore((state) => state.getTotalItems());
     const { pathname } = useLocation();
-    const showFab = pathname !== '/cart' && !pathname.startsWith('/admin');
+    const { active: overlayActive } = useContext(OverlayCtx);
+    const { isOpen } = useContext(BarCtx);
+    const showFab = pathname !== '/cart' && pathname !== '/reserva' && !pathname.startsWith('/admin') && !overlayActive && isOpen;
+    const isLightPage = pathname.startsWith('/admin') || pathname === '/cart' || pathname === '/reserva';
+    const isAdmin = pathname.startsWith('/admin');
+    const needsSafeAreaBottom = isLightPage && pathname !== '/cart';
 
     return (
-        <div className="relative min-h-screen flex flex-col bg-background text-text selection:bg-primary/20 selection:text-secondary">
-            <PatternBackground />
+        <div
+            className={`relative min-h-screen flex flex-col text-text selection:bg-primary/20 selection:text-secondary ${isLightPage ? 'bg-white' : ''}`}
+            style={needsSafeAreaBottom ? { paddingBottom: 'env(safe-area-inset-bottom)' } : undefined}
+        >
+            {/* Navbar removed */}
             <div className="relative z-10 flex flex-col min-h-screen">
                 <main className="flex-grow w-full">
                     {children}
                 </main>
-                <Footer />
+                {!pathname.startsWith('/admin') && pathname !== '/cart' && pathname !== '/reserva' && <Footer />}
             </div>
 
             {/* Floating Cart Button — mobile only */}

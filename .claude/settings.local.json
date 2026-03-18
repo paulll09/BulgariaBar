@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -n '1,183p' src/index.css)",
+      "Bash(mv src/index.css.tmp src/index.css)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(npx vite:*)"
+    ]
+  }
+}

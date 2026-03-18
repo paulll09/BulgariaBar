@@ -1,10 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const EMPTY_FORM = { name: '', address: '', paymentMethod: 'efectivo', notes: '' };
+
 export const useCartStore = create(
     persist(
         (set, get) => ({
             items: [],
+            orderType: null,
+            checkoutForm: EMPTY_FORM,
+
             addItem: (product) => {
                 set((state) => {
                     const existingItem = state.items.find((item) => item.id === product.id);
@@ -30,7 +35,9 @@ export const useCartStore = create(
                     ).filter(item => item.quantity > 0),
                 }));
             },
-            clearCart: () => set({ items: [] }),
+            clearCart: () => set({ items: [], orderType: null, checkoutForm: EMPTY_FORM }),
+            setOrderType: (orderType) => set({ orderType }),
+            setCheckoutForm: (updates) => set((state) => ({ checkoutForm: { ...state.checkoutForm, ...updates } })),
             getTotalItems: () => get().items.reduce((total, item) => total + item.quantity, 0),
             getTotalPrice: () => get().items.reduce((total, item) => total + (item.price * item.quantity), 0),
         }),

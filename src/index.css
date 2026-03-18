@@ -35,14 +35,33 @@
   box-sizing: border-box;
 }
 
+html {
+  background-color: #ffffff;
+  overscroll-behavior: none;
+}
+
 body {
-  background-color: var(--color-bg);
+  background-color: #ffffff;
   color: var(--color-text);
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.6;
   overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Prevent iOS auto-zoom on inputs ───── */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+/* ── Touch optimization for interactive elements ── */
+button, a, [role="button"] {
+  touch-action: manipulation;
 }
 
 /* ── Typography ───────────────────────────── */
@@ -70,6 +89,15 @@ body {
 }
 .animate-fade-up {
   animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-36px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-left {
+  animation: slide-in-left 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
 }
 
@@ -115,6 +143,32 @@ body {
   opacity: 0;
 }
 
+/* ── Hero — logo: scale + blur reveal ── */
+@keyframes hero-logo-in {
+  from { opacity: 0; transform: scale(0.78); filter: blur(8px); }
+  to   { opacity: 1; transform: scale(1);    filter: blur(0px); }
+}
+.animate-hero-logo {
+  animation: hero-logo-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* ── Hero — title: translateY + blur ── */
+@keyframes hero-title-in {
+  from { opacity: 0; transform: translateY(28px); filter: blur(10px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0px); }
+}
+.animate-hero-title {
+  animation: hero-title-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* ── Hero — background: initial reveal ── */
+@keyframes hero-bg-reveal {
+  from { opacity: 0; transform: scale(1.14) translate(0px, 0px); }
+  to   { opacity: 1; transform: scale(1.04) translate(0px, 0px); }
+}
+
 @keyframes kenburns-right {
   from { transform: scale(1.04) translateX(0px); }
   to   { transform: scale(1.12) translateX(16px); }
@@ -139,7 +193,17 @@ body {
 }
 .animate-loader-bounce {
   animation: loader-bounce 0.9s ease-in-out infinite;
+  will-change: transform;
 }
+
+@keyframes dot-blink {
+  0%, 20% { opacity: 0; }
+  50%     { opacity: 1; }
+  100%    { opacity: 0; }
+}
+.animate-dot-1 { animation: dot-blink 1.4s ease-in-out infinite; }
+.animate-dot-2 { animation: dot-blink 1.4s ease-in-out 0.2s infinite; }
+.animate-dot-3 { animation: dot-blink 1.4s ease-in-out 0.4s infinite; }
 
 @keyframes wiggle {
   0%, 85%, 100% { transform: scale(1); }
@@ -159,12 +223,17 @@ body {
 }
 .animate-fab-pulse {
   animation: fab-bounce 2s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes kenburns-hero {
   0%   { transform: scale(1.04) translate(0px, 0px); }
   100% { transform: scale(1.10) translate(-10px, -6px); }
 }
+
+/* ── Hide scrollbar utility (cross-browser) ─ */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ── Reduced motion ───────────────────────── */
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit2, Trash2, X, GripVertical } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -26,19 +27,39 @@ export default function AdminCategories() {
         setLoading(false);
     };
 
+    const lockScroll = () => {
+        const scrollY = window.scrollY;
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+    };
+
+    const unlockScroll = () => {
+        const scrollY = Math.abs(parseInt(document.body.style.top || '0'));
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+    };
+
     const openCreate = () => {
+        lockScroll();
         setEditing(null);
         setForm({ name: '', display_order: categories.length + 1 });
         setModalOpen(true);
     };
 
     const openEdit = (cat) => {
+        lockScroll();
         setEditing(cat);
         setForm({ name: cat.name, display_order: cat.display_order });
         setModalOpen(true);
     };
 
     const closeModal = () => {
+        unlockScroll();
         setModalOpen(false);
         setEditing(null);
         setForm({ name: '', display_order: '' });
@@ -159,14 +180,14 @@ export default function AdminCategories() {
                 )}
             </div>
 
-            {/* ── Modal / Bottom Sheet ── */}
-            {modalOpen && (
+            {/* ── Modal / Bottom Sheet (portal to escape animate-fade-up transform) ── */}
+            {modalOpen && createPortal(
                 <div
-                    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-                    style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+                    className="fixed inset-x-0 top-0 z-50 flex items-end sm:items-center justify-center"
+                    style={{ height: '100dvh', background: 'rgba(0,0,0,0.65)' }}
                     onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
                 >
-                    <div className="bg-background w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl border border-border shadow-2xl animate-fade-up">
+                    <div className="bg-background w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl border border-border shadow-2xl animate-fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
 
                         <div className="sm:hidden flex justify-center pt-3 pb-1">
                             <div className="w-10 h-1 rounded-full bg-border" />
@@ -224,7 +245,8 @@ export default function AdminCategories() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
