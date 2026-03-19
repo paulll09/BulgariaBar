@@ -33,8 +33,8 @@ export default function Layout({ children }) {
             {showFab && (
                 <Link
                     to="/cart"
-                    className={`sm:hidden fixed bottom-5 right-5 z-50 w-14 h-14 bg-primary rounded-full flex items-center justify-center active:scale-90 transition-transform ${totalItems > 0 ? 'animate-fab-pulse' : ''}`}
-                    style={{ boxShadow: '0 4px 20px rgba(217,0,9,0.45)' }}
+                    className={`sm:hidden fixed right-5 z-50 w-14 h-14 bg-primary rounded-full flex items-center justify-center active:scale-90 transition-transform ${totalItems > 0 ? 'animate-fab-pulse' : ''}`}
+                    style={{ bottom: 'max(20px, env(safe-area-inset-bottom, 20px))', boxShadow: '0 4px 20px rgba(217,0,9,0.45)' }}
                     aria-label="Ver carrito"
                 >
                     <ShoppingCart className="w-6 h-6 text-white" />

@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { supabase } from './lib/supabase';
@@ -12,12 +12,15 @@ import ReservationPage from './pages/ReservationPage';
 import { OverlayCtx } from './context/overlayCtx';
 import { BarCtx } from './context/barCtx';
 import { useSchedule } from './hooks/useSchedule';
+import { ConfirmProvider } from './components/ui/ConfirmDialog';
 
 const Login = lazy(() => import('./components/admin/Login'));
 const Dashboard = lazy(() => import('./components/admin/Dashboard'));
 const AdminProducts = lazy(() => import('./components/admin/AdminProducts'));
 const AdminCategories = lazy(() => import('./components/admin/AdminCategories'));
 const AdminHours = lazy(() => import('./components/admin/AdminHours'));
+const AdminQR = lazy(() => import('./components/admin/AdminQR'));
+const AdminPromotions = lazy(() => import('./components/admin/AdminPromotions'));
 
 function ProtectedRoute({ children }) {
   const [status, setStatus] = useState('checking');
@@ -65,9 +68,13 @@ function App() {
     return () => clearTimeout(t);
   }, []);
 
+  const barCtxValue = useMemo(() => ({ isOpen, schedule, appLoading: loading }), [isOpen, schedule, loading]);
+  const overlayCtxValue = useMemo(() => ({ active: overlayActive, setActive: setOverlayActive }), [overlayActive]);
+
   return (
-    <BarCtx.Provider value={{ isOpen, schedule, appLoading: loading }}>
-    <OverlayCtx.Provider value={{ active: overlayActive, setActive: setOverlayActive }}>
+    <BarCtx.Provider value={barCtxValue}>
+    <OverlayCtx.Provider value={overlayCtxValue}>
+    <ConfirmProvider>
     <BrowserRouter>
       {loading && <Loader />}
       <ScrollToTop />
@@ -107,12 +114,46 @@ function App() {
                 <ProtectedRoute><AdminHours /></ProtectedRoute>
               </div>
             } />
+            <Route path="/admin/qr" element={
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+                <ProtectedRoute><AdminQR /></ProtectedRoute>
+              </div>
+            } />
+            <Route path="/admin/promotions" element={
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+                <ProtectedRoute><AdminPromotions /></ProtectedRoute>
+              </div>
+            } />
           </Routes>
         </Suspense>
         </AdminErrorBoundary>
       </Layout>
-      <Toaster position="top-center" />
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          duration: 2500,
+          style: {
+            background: '#fff',
+            color: '#111',
+            border: '1px solid rgba(0,0,0,0.07)',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '13px',
+            fontWeight: 500,
+            borderRadius: '14px',
+            padding: '12px 16px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            maxWidth: '380px',
+          },
+          success: {
+            iconTheme: { primary: '#d90009', secondary: '#fff' },
+          },
+          error: {
+            iconTheme: { primary: '#d90009', secondary: '#fff' },
+          },
+        }}
+      />
     </BrowserRouter>
+    </ConfirmProvider>
     </OverlayCtx.Provider>
     </BarCtx.Provider>
   );

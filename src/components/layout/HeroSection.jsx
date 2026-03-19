@@ -17,7 +17,7 @@ export default function HeroSection() {
     return (
         <section
             className="relative w-full overflow-hidden flex flex-col items-center justify-center bg-black"
-            style={{ minHeight: '100svh', height: '100dvh', contain: 'layout style' }}
+            style={{ minHeight: '100svh', height: '100svh', contain: 'layout style' }}
         >
             {/* Imagen de fondo — reveal inmediato (el loader lo cubre mientras dura) */}
             <div
@@ -30,7 +30,8 @@ export default function HeroSection() {
                     animation: 'hero-bg-reveal 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
-                    isolation: 'isolate',
+                    willChange: 'transform, opacity',
+                    transform: 'translateZ(0)',
                     opacity: 0,
                 }}
             />
@@ -43,6 +44,7 @@ export default function HeroSection() {
                     background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.10) 52%, rgba(0,0,0,0.36) 100%)',
                     zIndex: 2,
                     pointerEvents: 'none',
+                    transform: 'translateZ(0)',
                 }}
             />
 
@@ -51,7 +53,9 @@ export default function HeroSection() {
                 <img
                     src="/images/logo.png"
                     alt="Bar Bulgaria"
-                    className="animate-hero-logo w-20 sm:w-24 h-auto object-contain drop-shadow-2xl"
+                    width="96"
+                    height="96"
+                    className="animate-hero-logo w-20 sm:w-24 h-auto object-contain"
                     style={{ animationDelay: d(500) }}
                     draggable="false"
                     loading="eager"

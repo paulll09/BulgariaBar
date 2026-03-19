@@ -5,9 +5,11 @@ import { ArrowLeft, Plus, Edit2, Trash2, X, GripVertical } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { inputCls } from '../../utils/styles';
+import { useConfirm } from '../ui/ConfirmDialog';
 
 export default function AdminCategories() {
     const navigate = useNavigate();
+    const confirm = useConfirm();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
@@ -99,7 +101,12 @@ export default function AdminCategories() {
     };
 
     const handleDelete = async (cat) => {
-        if (!window.confirm(`¿Eliminar "${cat.name}"?\nLos productos de esta categoría quedarán sin categoría.`)) return;
+        const ok = await confirm({
+            title: '¿Eliminar categoría?',
+            message: `"${cat.name}" se eliminará y sus productos quedarán sin categoría.`,
+            confirmText: 'Eliminar',
+        });
+        if (!ok) return;
         const { error } = await supabase.from('categories').delete().eq('id', cat.id);
         if (error) {
             toast.error(error.message);

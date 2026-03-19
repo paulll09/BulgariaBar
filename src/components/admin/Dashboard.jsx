@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useProducts } from '../../hooks/useProducts';
-import { LogOut, Package, Tags, Clock } from 'lucide-react';
+import { LogOut, Package, Tags, Clock, QrCode, Megaphone } from 'lucide-react';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function Dashboard() {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <DashboardCard
                     icon={<Package className="w-7 h-7 text-primary" />}
                     title="Productos"
@@ -53,6 +53,18 @@ export default function Dashboard() {
                     title="Horarios"
                     description="Configurá los días y horarios de apertura del bar."
                     onClick={() => navigate('/admin/hours')}
+                />
+                <DashboardCard
+                    icon={<Megaphone className="w-7 h-7 text-primary" />}
+                    title="Promociones"
+                    description="Gestioná promociones por día de la semana."
+                    onClick={() => navigate('/admin/promotions')}
+                />
+                <DashboardCard
+                    icon={<QrCode className="w-7 h-7 text-primary" />}
+                    title="Código QR"
+                    description="Generá e imprimí QR para las mesas del bar."
+                    onClick={() => navigate('/admin/qr')}
                 />
             </div>
         </div>

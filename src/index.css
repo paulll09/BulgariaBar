@@ -84,8 +84,8 @@ button, a, [role="button"] {
 
 /* ── Animations ───────────────────────────── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(18px) translateZ(0); }
+  to   { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 .animate-fade-up {
   animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -93,8 +93,8 @@ button, a, [role="button"] {
 }
 
 @keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-36px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateX(-36px) translateZ(0); }
+  to   { opacity: 1; transform: translateX(0) translateZ(0); }
 }
 .animate-slide-left {
   animation: slide-in-left 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -135,31 +135,34 @@ button, a, [role="button"] {
 }
 
 @keyframes hero-fade-in {
-  from { opacity: 0; transform: translateY(22px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(22px) translateZ(0); }
+  to   { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 .animate-hero-fade {
   animation: hero-fade-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
   opacity: 0;
 }
 
-/* ── Hero — logo: scale + blur reveal ── */
+/* ── Hero — logo: scale reveal ── */
 @keyframes hero-logo-in {
-  from { opacity: 0; transform: scale(0.78); filter: blur(8px); }
-  to   { opacity: 1; transform: scale(1);    filter: blur(0px); }
+  from { opacity: 0; transform: scale(0.78) translateZ(0); }
+  to   { opacity: 1; transform: scale(1) translateZ(0); }
 }
 .animate-hero-logo {
   animation: hero-logo-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
   opacity: 0;
 }
 
-/* ── Hero — title: translateY + blur ── */
+/* ── Hero — title: translateY ── */
 @keyframes hero-title-in {
-  from { opacity: 0; transform: translateY(28px); filter: blur(10px); }
-  to   { opacity: 1; transform: translateY(0);    filter: blur(0px); }
+  from { opacity: 0; transform: translateY(28px) translateZ(0); }
+  to   { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 .animate-hero-title {
   animation: hero-title-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
   opacity: 0;
 }
 
@@ -229,6 +232,31 @@ button, a, [role="button"] {
 @keyframes kenburns-hero {
   0%   { transform: scale(1.04) translate(0px, 0px); }
   100% { transform: scale(1.10) translate(-10px, -6px); }
+}
+
+/* ── Confirm dialog animations ───────────── */
+@keyframes slide-up-modal {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-slide-up {
+  animation: slide-up-modal 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slide-down-modal {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(16px) scale(0.97); }
+}
+.animate-slide-down {
+  animation: slide-down-modal 0.2s ease-in forwards;
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.animate-fade-out {
+  animation: fade-out 0.2s ease-in forwards;
 }
 
 /* ── Hide scrollbar utility (cross-browser) ─ */

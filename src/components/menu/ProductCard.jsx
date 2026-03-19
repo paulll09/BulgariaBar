@@ -13,18 +13,7 @@ export default function ProductCard({ product, categoryName }) {
     const handleAdd = () => {
         const effectivePrice = getEffectivePrice(product);
         addItem({ ...product, category_name: categoryName, price: effectivePrice, originalPrice: product.price });
-        toast.success(`${product.name} agregado`, {
-            style: {
-                background: '#fff',
-                color: '#111',
-                border: '1px solid rgba(0,0,0,0.07)',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: '13px',
-                borderRadius: '12px',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-            },
-            iconTheme: { primary: '#d90009', secondary: '#fff' },
-        });
+        toast.success(`${product.name} agregado`);
     };
 
     return (
@@ -32,7 +21,7 @@ export default function ProductCard({ product, categoryName }) {
              style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.07)' }}>
 
             {/* ── Image ───────────────────────────── */}
-            <div className={`relative w-full aspect-[4/3] overflow-hidden bg-surface2 ${!imgLoaded ? 'animate-pulse' : ''}`}>
+            <div className={`relative w-full aspect-square overflow-hidden bg-surface2 ${!imgLoaded ? 'animate-pulse' : ''}`}>
                 <img
                     src={product.image_url}
                     alt={product.name}
@@ -56,7 +45,7 @@ export default function ProductCard({ product, categoryName }) {
 
                 {/* Description */}
                 {product.description && (
-                    <p className="text-text-muted text-[13px] leading-snug line-clamp-2">
+                    <p className="text-text text-sm leading-snug line-clamp-2">
                         {product.description}
                     </p>
                 )}
@@ -67,18 +56,18 @@ export default function ProductCard({ product, categoryName }) {
                     {hasDiscount(product) ? (
                         <div className="flex flex-col">
                             <div className="flex items-baseline gap-1">
-                                <span className="text-text-dim text-xs font-semibold">$</span>
+                                <span className="text-text text-sm font-semibold">$</span>
                                 <span className="font-display font-bold text-primary text-2xl sm:text-3xl leading-none">
                                     {getEffectivePrice(product).toLocaleString('es-AR')}
                                 </span>
                             </div>
-                            <span className="text-text-dim text-xs line-through mt-0.5">
+                            <span className="text-text/60 text-sm line-through mt-0.5">
                                 ${product.price.toLocaleString('es-AR')}
                             </span>
                         </div>
                     ) : (
                         <div className="flex items-baseline gap-1">
-                            <span className="text-text-dim text-xs font-semibold">$</span>
+                            <span className="text-text text-sm font-semibold">$</span>
                             <span className="font-display font-bold text-text text-2xl sm:text-3xl leading-none">
                                 {product.price.toLocaleString('es-AR')}
                             </span>

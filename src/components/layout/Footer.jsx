@@ -60,7 +60,7 @@ export default function Footer() {
                     <FadeItem visible={visible} delay={80}>
                         <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
                             <div className="flex items-center gap-3 mb-4">
-                                <img src="/images/logo.png" alt="Bulgaria" className="w-10 h-10 object-contain" />
+                                <img src="/images/logo.png" alt="Bulgaria" width="40" height="40" className="w-10 h-10 object-contain" />
                                 <div>
                                     <p className="font-display font-semibold text-2xl uppercase leading-none" style={{ color: 'rgba(255,255,255,0.92)' }}>Bulgaria</p>
                                     <p className="text-[10px] uppercase tracking-[0.3em] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Bar &amp; Cocina</p>
@@ -77,7 +77,7 @@ export default function Footer() {
                                     aria-label="Instagram">
                                     <IconInstagram />
                                 </a>
-                                <a href="https://www.facebook.com/share/1CdGry9m2o/?mibextid=wwXlfr" target="_blank" rel="noopener noreferrer" className="w-9 h-9 flex items-center justify-center rounded-full transition-all"
+                                <a href="https://web.facebook.com/profile.php?id=61581728573140" target="_blank" rel="noopener noreferrer" className="w-9 h-9 flex items-center justify-center rounded-full transition-all"
                                     style={{ border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)' }}
                                     onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; e.currentTarget.style.color = 'rgba(255,255,255,0.9)'; }}
                                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; }}
