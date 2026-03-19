@@ -145,17 +145,20 @@ export default function Cart() {
                         <div className="flex items-center gap-1 bg-cream rounded-full p-0.5 shrink-0"
                              style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.07)' }}>
                             <button onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text transition-all active:scale-90">
+                                aria-label={`Reducir cantidad de ${item.name}`}
+                                className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text transition-all active:scale-90">
                                 <Minus className="w-3.5 h-3.5" />
                             </button>
                             <span className="w-6 text-center text-text font-bold text-sm">{item.quantity}</span>
                             <button onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text transition-all active:scale-90">
+                                aria-label={`Aumentar cantidad de ${item.name}`}
+                                className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text transition-all active:scale-90">
                                 <Plus className="w-3.5 h-3.5" />
                             </button>
                         </div>
                         <button onClick={() => removeItem(item.id)}
-                            className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full text-text-dim hover:text-primary hover:bg-primary/5 transition-all shrink-0">
+                            aria-label={`Eliminar ${item.name}`}
+                            className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full text-text-dim hover:text-primary hover:bg-primary/5 transition-all shrink-0">
                             <Trash2 className="w-4 h-4" />
                         </button>
                     </div>

@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { useProducts } from '../../hooks/useProducts';
 import toast from 'react-hot-toast';
 import { inputCls } from '../../utils/styles';
+import { useConfirm } from '../ui/ConfirmDialog';
 
 /* ── Resize image to 800x600 (cover + center crop) ── */
 function resizeImage(file) {
@@ -34,6 +35,7 @@ const EMPTY_FORM = { name: '', description: '', price: '', category_id: '', imag
 
 export default function AdminProducts() {
     const navigate = useNavigate();
+    const confirm = useConfirm();
     const { products, categories, loading, refetch } = useProducts(true);
     const categoryMap = useMemo(
         () => new Map(categories.map(c => [c.id, c.name])),
@@ -199,7 +201,12 @@ export default function AdminProducts() {
     };
 
     const handleDelete = async (product) => {
-        if (!window.confirm(`¿Eliminar "${product.name}"?`)) return;
+        const ok = await confirm({
+            title: '¿Eliminar producto?',
+            message: `"${product.name}" se eliminará permanentemente. Esta acción no se puede deshacer.`,
+            confirmText: 'Eliminar',
+        });
+        if (!ok) return;
         const { error } = await supabase.from('products').delete().eq('id', product.id);
         if (error) {
             toast.error(error.message);
