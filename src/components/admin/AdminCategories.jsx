@@ -21,6 +21,16 @@ export default function AdminCategories() {
         fetchCategories();
     }, []);
 
+    // Ensure scroll is unlocked if component unmounts while modal is open
+    useEffect(() => {
+        return () => {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+        };
+    }, []);
+
     const fetchCategories = async () => {
         setLoading(true);
         const { data, error } = await supabase.from('categories').select('*').order('display_order');

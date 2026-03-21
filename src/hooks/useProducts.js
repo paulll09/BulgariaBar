@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { dummyProducts, dummyCategories } from '../data/dummyMenu';
 
@@ -7,19 +7,28 @@ const isSupabaseConfigured = () => {
     return url && url !== 'https://tu-proyecto.supabase.co';
 };
 
+const MAX_RETRIES = 3;
+const RETRY_DELAYS = [2000, 4000, 8000];
+
 /**
- * Fetches products and categories from Supabase.
+ * Fetches products (with optional variants) and categories from Supabase.
+ * If the product_variants table doesn't exist yet, fetches products without variants.
  * Falls back to dummyMenu if Supabase is not configured.
- * @param {boolean} adminMode - If true, fetches ALL products (including hidden). Requires auth.
+ * Retries automatically on failure (up to 3 times).
  */
 export function useProducts(adminMode = false) {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const retryCount = useRef(0);
+    const retryTimer = useRef(null);
 
-    const fetchData = async () => {
-        setLoading(true);
+    const fetchData = async (isRetry = false) => {
+        if (!isRetry) {
+            setLoading(true);
+            retryCount.current = 0;
+        }
         setError(null);
 
         if (!isSupabaseConfigured()) {
@@ -30,28 +39,50 @@ export function useProducts(adminMode = false) {
         }
 
         try {
-            const [catRes, prodRes] = await Promise.all([
-                supabase.from('categories').select('*').order('display_order'),
-                adminMode
-                    ? supabase.from('products').select('*').order('created_at')
-                    : supabase.from('products').select('*').eq('visible', true).order('created_at'),
-            ]);
-
+            // Fetch categories
+            const catRes = await supabase.from('categories').select('*').order('display_order');
             if (catRes.error) throw catRes.error;
-            if (prodRes.error) throw prodRes.error;
+
+            // Try fetching products with variants first
+            const prodQuery = adminMode
+                ? supabase.from('products').select('*, product_variants(*)').order('created_at')
+                : supabase.from('products').select('*, product_variants(*)').eq('visible', true).order('created_at');
+
+            let prodRes = await prodQuery;
+
+            // If variants table doesn't exist, fetch products without variants
+            if (prodRes.error) {
+                const fallbackQuery = adminMode
+                    ? supabase.from('products').select('*').order('created_at')
+                    : supabase.from('products').select('*').eq('visible', true).order('created_at');
+
+                prodRes = await fallbackQuery;
+                if (prodRes.error) throw prodRes.error;
+            }
 
             setCategories(catRes.data);
-            setProducts(prodRes.data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
+            setProducts(prodRes.data.map(p => ({
+                ...p,
+                product_variants: (p.product_variants || []).sort((a, b) => (a.display_order || 0) - (b.display_order || 0)),
+            })));
             setLoading(false);
+            retryCount.current = 0;
+        } catch (err) {
+            if (retryCount.current < MAX_RETRIES) {
+                const delay = RETRY_DELAYS[retryCount.current] || 8000;
+                retryCount.current += 1;
+                retryTimer.current = setTimeout(() => fetchData(true), delay);
+            } else {
+                setError(err.message || 'Error al cargar el menú');
+                setLoading(false);
+            }
         }
     };
 
     useEffect(() => {
         fetchData();
+        return () => { if (retryTimer.current) clearTimeout(retryTimer.current); };
     }, [adminMode]);
 
-    return { products, categories, loading, error, refetch: fetchData };
+    return { products, categories, loading, error, refetch: () => fetchData(false) };
 }

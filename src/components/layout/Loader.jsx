@@ -2,11 +2,15 @@ import { useEffect, useState } from 'react';
 
 export default function Loader() {
     const [hiding, setHiding] = useState(false);
+    const [removed, setRemoved] = useState(false);
 
     useEffect(() => {
-        const t = setTimeout(() => setHiding(true), 1400);
-        return () => clearTimeout(t);
+        const t1 = setTimeout(() => setHiding(true), 1400);
+        const t2 = setTimeout(() => setRemoved(true), 1900); // after fade-out completes
+        return () => { clearTimeout(t1); clearTimeout(t2); };
     }, []);
+
+    if (removed) return null;
 
     return (
         <div

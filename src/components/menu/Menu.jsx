@@ -9,13 +9,28 @@ function ScrollReveal({ children, delay = 0, animClass = 'animate-fade-up' }) {
     useEffect(() => {
         const el = ref.current;
         if (!el) return;
+
+        // Fallback: if IntersectionObserver doesn't fire (e.g. in-app browsers),
+        // force content visible after a short timeout
+        const fallback = setTimeout(() => setVisible(true), 1500 + delay);
+
+        if (typeof IntersectionObserver === 'undefined') {
+            return () => clearTimeout(fallback);
+        }
+
         const obs = new IntersectionObserver(
-            ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setVisible(true);
+                    obs.disconnect();
+                    clearTimeout(fallback);
+                }
+            },
             { rootMargin: '0px 0px -40px 0px', threshold: 0.05 }
         );
         obs.observe(el);
-        return () => obs.disconnect();
-    }, []);
+        return () => { obs.disconnect(); clearTimeout(fallback); };
+    }, [delay]);
     return (
         <div
             ref={ref}
@@ -28,7 +43,7 @@ function ScrollReveal({ children, delay = 0, animClass = 'animate-fade-up' }) {
 }
 
 export default function Menu() {
-    const { products, categories, loading } = useProducts(false);
+    const { products, categories, loading, error, refetch } = useProducts(false);
     const [activeCategory, setActiveCategory] = useState(null);
     const sectionRefs = useRef({});
     const tabsRef = useRef(null);
@@ -212,6 +227,16 @@ export default function Menu() {
                         {[...Array(6)].map((_, i) => (
                             <div key={i} className="rounded-2xl bg-surface animate-pulse h-48" />
                         ))}
+                    </div>
+                ) : error ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <p className="text-text-muted text-sm text-center">No se pudo cargar el menú. Verificá tu conexión e intentá de nuevo.</p>
+                        <button
+                            onClick={refetch}
+                            className="cursor-pointer bg-primary hover:bg-primary-dark text-white text-xs font-semibold uppercase tracking-widest px-6 py-3 rounded-full transition-all active:scale-95"
+                        >
+                            Reintentar
+                        </button>
                     </div>
                 ) : (
                     categories.map((cat) => {
