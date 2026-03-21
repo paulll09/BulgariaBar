@@ -43,12 +43,25 @@ export default function Footer() {
     useEffect(() => {
         const el = footerRef.current;
         if (!el) return;
+
+        const fallback = setTimeout(() => setVisible(true), 3000);
+
+        if (typeof IntersectionObserver === 'undefined') {
+            return () => clearTimeout(fallback);
+        }
+
         const obs = new IntersectionObserver(
-            ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setVisible(true);
+                    obs.disconnect();
+                    clearTimeout(fallback);
+                }
+            },
             { threshold: 0.08 }
         );
         obs.observe(el);
-        return () => obs.disconnect();
+        return () => { obs.disconnect(); clearTimeout(fallback); };
     }, []);
 
     return (

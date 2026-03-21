@@ -10,28 +10,41 @@ export const useCartStore = create(
             orderType: null,
             checkoutForm: EMPTY_FORM,
 
-            addItem: (product) => {
+            addItem: (product, variant = null) => {
+                const cartKey = variant ? `${product.id}_${variant.id}` : product.id;
                 set((state) => {
-                    const existingItem = state.items.find((item) => item.id === product.id);
+                    const existingItem = state.items.find((item) => (item.cartKey || item.id) === cartKey);
                     if (existingItem) {
                         return {
                             items: state.items.map((item) =>
-                                item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                                (item.cartKey || item.id) === cartKey ? { ...item, quantity: item.quantity + 1 } : item
                             ),
                         };
                     }
-                    return { items: [...state.items, { ...product, quantity: 1 }] };
+                    return {
+                        items: [...state.items, {
+                            ...product,
+                            product_variants: undefined,
+                            cartKey,
+                            variantId: variant?.id || null,
+                            variantName: variant?.name || null,
+                            price: variant ? variant.price : product.price,
+                            originalPrice: variant ? variant.price : product.price,
+                            variantDiscount: variant?.discount || 0,
+                            quantity: 1,
+                        }],
+                    };
                 });
             },
-            removeItem: (productId) => {
+            removeItem: (cartKey) => {
                 set((state) => ({
-                    items: state.items.filter((item) => item.id !== productId),
+                    items: state.items.filter((item) => (item.cartKey || item.id) !== cartKey),
                 }));
             },
-            updateQuantity: (productId, quantity) => {
+            updateQuantity: (cartKey, quantity) => {
                 set((state) => ({
                     items: state.items.map((item) =>
-                        item.id === productId ? { ...item, quantity: Math.max(0, quantity) } : item
+                        (item.cartKey || item.id) === cartKey ? { ...item, quantity: Math.max(0, quantity) } : item
                     ).filter(item => item.quantity > 0),
                 }));
             },

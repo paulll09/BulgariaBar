@@ -1,4 +1,4 @@
-import { useContext, useRef } from 'react';
+import { useContext, useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { BarCtx } from '../../context/barCtx';
@@ -9,6 +9,12 @@ export default function HeroSection() {
     const { appLoading } = useContext(BarCtx);
     const hadLoader = useRef(appLoading).current;
     const d = (base) => `${hadLoader ? LOADER_DURATION + base : base}ms`;
+    const [fixedH, setFixedH] = useState(null);
+
+    // Capture viewport height once on mount — immune to in-app browser chrome resize
+    useEffect(() => {
+        setFixedH(window.innerHeight);
+    }, []);
 
     const scrollToMenu = () => {
         document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -16,10 +22,13 @@ export default function HeroSection() {
 
     return (
         <section
-            className="relative w-full overflow-hidden flex flex-col items-center justify-center bg-black"
-            style={{ minHeight: '100svh', height: '100svh', contain: 'layout style' }}
+            className="relative w-full overflow-hidden flex flex-col items-center justify-center bg-black hero-fullscreen"
+            style={{
+                contain: 'layout style paint',
+                ...(fixedH ? { height: fixedH, minHeight: fixedH } : {}),
+            }}
         >
-            {/* Imagen de fondo — reveal inmediato (el loader lo cubre mientras dura) */}
+            {/* Imagen de fondo — GPU-composited, fixed size to avoid reflow */}
             <div
                 style={{
                     position: 'absolute',
@@ -27,12 +36,11 @@ export default function HeroSection() {
                     backgroundImage: "url('/images/bulhero2.jpeg')",
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    animation: 'hero-bg-reveal 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    animation: 'hero-bg-reveal 1.6s cubic-bezier(0.16, 1, 0.3, 1) both',
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
-                    willChange: 'transform, opacity',
                     transform: 'translateZ(0)',
-                    opacity: 0,
+                    willChange: 'transform',
                 }}
             />
 

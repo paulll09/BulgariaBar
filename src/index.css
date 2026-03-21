@@ -82,14 +82,35 @@ button, a, [role="button"] {
 /* ── Selection ────────────────────────────── */
 ::selection { background: rgba(217, 0, 9, 0.15); }
 
+/* ── Hero fullscreen — robust for in-app browsers (Instagram, TikTok, etc.) ── */
+.hero-fullscreen {
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  /* Prevent the section from triggering layout when viewport chrome resizes */
+  overflow-anchor: none;
+}
+@supports (height: 100svh) {
+  .hero-fullscreen {
+    min-height: 100svh;
+    height: 100svh;
+  }
+}
+/* Extra fallback for older iOS WebViews */
+@supports (-webkit-touch-callout: none) and (not (height: 100svh)) {
+  .hero-fullscreen {
+    min-height: -webkit-fill-available;
+    height: -webkit-fill-available;
+  }
+}
+
 /* ── Animations ───────────────────────────── */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(18px) translateZ(0); }
   to   { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 .animate-fade-up {
-  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
+  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes slide-in-left {
@@ -97,8 +118,7 @@ button, a, [role="button"] {
   to   { opacity: 1; transform: translateX(0) translateZ(0); }
 }
 .animate-slide-left {
-  animation: slide-in-left 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
+  animation: slide-in-left 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes slide-down {
@@ -139,9 +159,7 @@ button, a, [role="button"] {
   to   { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 .animate-hero-fade {
-  animation: hero-fade-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: transform, opacity;
-  opacity: 0;
+  animation: hero-fade-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ── Hero — logo: scale reveal ── */
@@ -150,9 +168,7 @@ button, a, [role="button"] {
   to   { opacity: 1; transform: scale(1) translateZ(0); }
 }
 .animate-hero-logo {
-  animation: hero-logo-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: transform, opacity;
-  opacity: 0;
+  animation: hero-logo-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ── Hero — title: translateY ── */
@@ -161,9 +177,7 @@ button, a, [role="button"] {
   to   { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 .animate-hero-title {
-  animation: hero-title-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: transform, opacity;
-  opacity: 0;
+  animation: hero-title-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ── Hero — background: initial reveal ── */
@@ -262,6 +276,18 @@ button, a, [role="button"] {
 /* ── Hide scrollbar utility (cross-browser) ─ */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Fallback: ensure content is visible even if animations fail ── */
+@supports not (animation-fill-mode: both) {
+  .animate-fade-up,
+  .animate-slide-left,
+  .animate-hero-fade,
+  .animate-hero-logo,
+  .animate-hero-title {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
 
 /* ── Reduced motion ───────────────────────── */
 @media (prefers-reduced-motion: reduce) {

@@ -12,6 +12,7 @@ export const dummyProducts = [
         price: 8500,
         image_url: '/images/hamburguesaDoble1.jpg',
         category_id: '1',
+        product_variants: [],
     },
     {
         id: 'p2',
@@ -20,6 +21,7 @@ export const dummyProducts = [
         price: 9500,
         image_url: '/images/hamburguesCrazyDoble.jpg',
         category_id: '1',
+        product_variants: [],
     },
     {
         id: 'p5',
@@ -28,6 +30,7 @@ export const dummyProducts = [
         price: 7500,
         image_url: '/images/sandwich.jpg',
         category_id: '1',
+        product_variants: [],
     },
     {
         id: 'p6',
@@ -36,6 +39,7 @@ export const dummyProducts = [
         price: 11000,
         image_url: '/images/lomitoTradicional.jpg',
         category_id: '1',
+        product_variants: [],
     },
     {
         id: 'p3',
@@ -44,21 +48,30 @@ export const dummyProducts = [
         price: 9000,
         image_url: '/images/pizza.jpg',
         category_id: '2',
+        product_variants: [],
     },
     {
         id: 'p7',
         name: 'Papas con Cheddar',
         description: 'Porción abundante de papas fritas con cheddar fundido y verdeo.',
-        price: 5500,
+        price: 4500,
         image_url: '/images/papasCheddar.jpg',
         category_id: '2',
+        product_variants: [
+            { id: 'v1', product_id: 'p7', name: 'Chica', price: 4500, discount: 0, display_order: 0 },
+            { id: 'v2', product_id: 'p7', name: 'Grande', price: 6500, discount: 0, display_order: 1 },
+        ],
     },
     {
         id: 'p4',
-        name: 'Coca Cola 500ml',
+        name: 'Coca Cola',
         description: 'Gaseosa línea Coca Cola.',
         price: 2500,
         image_url: '/images/coca500.jpg',
         category_id: '3',
+        product_variants: [
+            { id: 'v3', product_id: 'p4', name: '500ml', price: 2500, discount: 0, display_order: 0 },
+            { id: 'v4', product_id: 'p4', name: '1.5L', price: 4000, discount: 0, display_order: 1 },
+        ],
     },
 ];

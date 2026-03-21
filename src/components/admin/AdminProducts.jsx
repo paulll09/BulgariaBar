@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit2, Trash2, Eye, EyeOff, X, Upload, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Edit2, Trash2, Eye, EyeOff, X, Upload, Image as ImageIcon, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useProducts } from '../../hooks/useProducts';
 import toast from 'react-hot-toast';
@@ -31,7 +31,7 @@ function resizeImage(file) {
 }
 
 
-const EMPTY_FORM = { name: '', description: '', price: '', category_id: '', image_url: '', discount: 0 };
+const EMPTY_FORM = { name: '', description: '', price: '', category_id: '', image_url: '', discount: 0, variants: [] };
 
 export default function AdminProducts() {
     const navigate = useNavigate();
@@ -41,6 +41,19 @@ export default function AdminProducts() {
         () => new Map(categories.map(c => [c.id, c.name])),
         [categories]
     );
+    const [search, setSearch] = useState('');
+    const [filterCat, setFilterCat] = useState('');
+
+    const filteredProducts = useMemo(() => {
+        let list = products;
+        if (filterCat) list = list.filter(p => p.category_id === filterCat);
+        if (search.trim()) {
+            const q = search.trim().toLowerCase();
+            list = list.filter(p => p.name.toLowerCase().includes(q));
+        }
+        return list;
+    }, [products, search, filterCat]);
+
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState(EMPTY_FORM);
@@ -51,6 +64,8 @@ export default function AdminProducts() {
     const formRef = useRef(null);
 
     const scrollYRef = useRef(0);
+
+    const hasVariants = form.variants.length > 0;
 
     const lockScroll = () => {
         scrollYRef.current = window.scrollY;
@@ -70,6 +85,17 @@ export default function AdminProducts() {
         window.scrollTo(0, scrollYRef.current);
     };
 
+    // Ensure scroll is unlocked if component unmounts while modal is open
+    useEffect(() => {
+        return () => {
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.overflow = '';
+        };
+    }, []);
+
     useEffect(() => {
         if (modalOpen && formRef.current) formRef.current.scrollTop = 0;
     }, [modalOpen]);
@@ -86,6 +112,13 @@ export default function AdminProducts() {
     const openEdit = (product) => {
         lockScroll();
         setEditing(product);
+        const variants = (product.product_variants || []).map(v => ({
+            id: v.id,
+            name: v.name,
+            price: v.price,
+            discount: v.discount || 0,
+            display_order: v.display_order || 0,
+        }));
         setForm({
             name: product.name,
             description: product.description || '',
@@ -93,6 +126,7 @@ export default function AdminProducts() {
             category_id: product.category_id || '',
             image_url: product.image_url || '',
             discount: product.discount || 0,
+            variants,
         });
         setImageFile(null);
         setImagePreview(product.image_url || null);
@@ -140,10 +174,44 @@ export default function AdminProducts() {
         return data.publicUrl;
     };
 
+    /* ── Variant helpers ── */
+    const addVariant = () => {
+        setForm(f => ({
+            ...f,
+            variants: [...f.variants, { id: crypto.randomUUID(), name: '', price: '', discount: 0, display_order: f.variants.length }],
+        }));
+    };
+
+    const updateVariant = (idx, field, value) => {
+        setForm(f => ({
+            ...f,
+            variants: f.variants.map((v, i) => i === idx ? { ...v, [field]: value } : v),
+        }));
+    };
+
+    const removeVariant = (idx) => {
+        setForm(f => ({
+            ...f,
+            variants: f.variants.filter((_, i) => i !== idx),
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!form.name.trim() || !form.price || !form.category_id) {
-            toast.error('Completá nombre, precio y categoría');
+
+        if (!form.name.trim() || !form.category_id) {
+            toast.error('Completá nombre y categoría');
+            return;
+        }
+
+        if (hasVariants) {
+            const invalidVariant = form.variants.some(v => !v.name.trim() || !v.price);
+            if (invalidVariant) {
+                toast.error('Completá nombre y precio de cada variante');
+                return;
+            }
+        } else if (!form.price) {
+            toast.error('Completá el precio');
             return;
         }
 
@@ -159,25 +227,49 @@ export default function AdminProducts() {
             let imageUrl = form.image_url;
             if (imageFile) imageUrl = await uploadImage(imageFile);
 
+            const variantPrices = form.variants.map(v => parseFloat(v.price));
+            const basePrice = hasVariants ? Math.min(...variantPrices) : parseFloat(form.price);
+
             const payload = {
                 name: form.name.trim(),
                 description: form.description.trim(),
-                price: parseFloat(form.price),
+                price: basePrice,
                 category_id: form.category_id,
                 image_url: imageUrl || null,
-                discount: parseInt(form.discount) || 0,
+                discount: hasVariants ? 0 : (parseInt(form.discount) || 0),
             };
+
+            let productId;
 
             if (editing) {
                 const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
                 if (error) throw error;
-                toast.success('Producto actualizado');
+                productId = editing.id;
             } else {
-                const { error } = await supabase.from('products').insert({ ...payload, visible: true });
+                const { data, error } = await supabase.from('products').insert({ ...payload, visible: true }).select('id').single();
                 if (error) throw error;
-                toast.success('Producto creado');
+                productId = data.id;
             }
 
+            // Sync variants: delete all then re-insert
+            if (editing) {
+                const { error: delErr } = await supabase.from('product_variants').delete().eq('product_id', productId);
+                if (delErr) throw delErr;
+            }
+
+            if (hasVariants) {
+                const variantRows = form.variants.map((v, i) => ({
+                    product_id: productId,
+                    name: v.name.trim(),
+                    price: parseFloat(v.price),
+                    discount: parseInt(v.discount) || 0,
+                    display_order: i,
+                }));
+                const { error: insErr } = await supabase.from('product_variants').insert(variantRows);
+                if (insErr) throw insErr;
+            }
+
+            toast.success(editing ? 'Producto actualizado' : 'Producto creado');
             closeModal();
             refetch();
         } catch (err) {
@@ -216,6 +308,34 @@ export default function AdminProducts() {
         }
     };
 
+    /* ── Price display helper for admin list ── */
+    const renderAdminPrice = (product) => {
+        const variants = product.product_variants || [];
+        if (variants.length > 0) {
+            const prices = variants.map(v => v.price);
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            return (
+                <div>
+                    <span className="font-bold text-primary text-sm">
+                        ${min.toLocaleString('es-AR')}{min !== max ? ` - $${max.toLocaleString('es-AR')}` : ''}
+                    </span>
+                    <span className="text-text-dim text-[10px] ml-1.5">{variants.length} var.</span>
+                </div>
+            );
+        }
+        if (product.discount > 0) {
+            return (
+                <div>
+                    <span className="font-bold text-primary text-sm">${Math.round(product.price * (1 - product.discount / 100)).toLocaleString('es-AR')}</span>
+                    <span className="text-text-dim text-xs line-through ml-1.5">${Number(product.price).toLocaleString('es-AR')}</span>
+                    <span className="text-[10px] font-bold text-primary ml-1">-{product.discount}%</span>
+                </div>
+            );
+        }
+        return <span className="font-bold text-primary text-sm">${Number(product.price).toLocaleString('es-AR')}</span>;
+    };
+
     return (
         <div className="max-w-6xl mx-auto animate-fade-up pb-10">
 
@@ -245,18 +365,44 @@ export default function AdminProducts() {
                 </button>
             </div>
 
+            {/* ── Search + Filter ── */}
+            {!loading && products.length > 0 && (
+                <div className="flex gap-2 mb-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Buscar producto..."
+                            className={`${inputCls} pl-9 py-2.5 text-sm`}
+                        />
+                    </div>
+                    <select
+                        value={filterCat}
+                        onChange={(e) => setFilterCat(e.target.value)}
+                        className={`${inputCls} py-2.5 text-sm w-auto min-w-[130px]`}
+                    >
+                        <option value="">Todas</option>
+                        {categories.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
             {/* ── Mobile: Cards ── */}
             <div className="sm:hidden flex flex-col gap-3">
                 {loading ? (
                     [...Array(3)].map((_, i) => (
                         <div key={i} className="h-20 rounded-2xl bg-surface animate-pulse" />
                     ))
-                ) : products.length === 0 ? (
+                ) : filteredProducts.length === 0 ? (
                     <div className="py-16 text-center text-text-muted text-sm">
-                        No hay productos. Creá el primero.
+                        {products.length === 0 ? 'No hay productos. Creá el primero.' : 'No se encontraron productos.'}
                     </div>
                 ) : (
-                    products.map((product) => {
+                    filteredProducts.map((product) => {
                         const catName = categoryMap.get(product.category_id);
                         return (
                             <div
@@ -275,15 +421,7 @@ export default function AdminProducts() {
                                 <div className="flex-1 min-w-0">
                                     <p className="font-semibold text-text text-sm truncate">{product.name}</p>
                                     {catName && <p className="text-text-muted text-xs truncate">{catName}</p>}
-                                    {product.discount > 0 ? (
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <span className="text-primary font-bold text-sm">${Math.round(product.price * (1 - product.discount / 100)).toLocaleString('es-AR')}</span>
-                                            <span className="text-text-dim text-xs line-through">${Number(product.price).toLocaleString('es-AR')}</span>
-                                            <span className="text-[10px] font-bold text-primary">-{product.discount}%</span>
-                                        </div>
-                                    ) : (
-                                        <p className="text-primary font-bold text-sm mt-0.5">${Number(product.price).toLocaleString('es-AR')}</p>
-                                    )}
+                                    <div className="mt-0.5">{renderAdminPrice(product)}</div>
                                 </div>
 
                                 {/* Actions */}
@@ -334,12 +472,12 @@ export default function AdminProducts() {
                                         <div className="h-10 bg-surface animate-pulse rounded-lg" />
                                     </td></tr>
                                 ))
-                            ) : products.length === 0 ? (
+                            ) : filteredProducts.length === 0 ? (
                                 <tr><td colSpan="6" className="p-10 text-center text-text-muted text-sm">
-                                    No hay productos. Creá el primero.
+                                    {products.length === 0 ? 'No hay productos. Creá el primero.' : 'No se encontraron productos.'}
                                 </td></tr>
                             ) : (
-                                products.map((product) => (
+                                filteredProducts.map((product) => (
                                     <tr key={product.id} className={`transition-colors hover:bg-surface/50 ${!product.visible ? 'opacity-50' : ''}`}>
                                         <td className="p-4">
                                             <div className="w-12 h-12 rounded-xl bg-surface overflow-hidden border border-border flex items-center justify-center">
@@ -357,15 +495,7 @@ export default function AdminProducts() {
                                             {categoryMap.get(product.category_id) || '—'}
                                         </td>
                                         <td className="p-4">
-                                            {product.discount > 0 ? (
-                                                <div>
-                                                    <span className="font-bold text-primary text-sm">${Math.round(product.price * (1 - product.discount / 100)).toLocaleString('es-AR')}</span>
-                                                    <span className="text-text-dim text-xs line-through ml-1.5">${Number(product.price).toLocaleString('es-AR')}</span>
-                                                    <span className="text-[10px] font-bold text-primary ml-1">-{product.discount}%</span>
-                                                </div>
-                                            ) : (
-                                                <span className="font-bold text-primary text-sm">${Number(product.price).toLocaleString('es-AR')}</span>
-                                            )}
+                                            {renderAdminPrice(product)}
                                         </td>
                                         <td className="p-4 text-center">
                                             <button onClick={() => handleToggleVisible(product)}
@@ -463,48 +593,120 @@ export default function AdminProducts() {
                                         className={`${inputCls} resize-none`} />
                                 </div>
 
-                                {/* Price + Category */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
-                                            Precio <span className="text-primary">*</span>
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim text-sm">$</span>
-                                            <input type="number" min="0" step="100" value={form.price}
-                                                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                                                placeholder="8500"
-                                                className={`${inputCls} pl-7`} />
+                                {/* Category (always visible) */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
+                                        Categoría <span className="text-primary">*</span>
+                                    </label>
+                                    <select value={form.category_id}
+                                        onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+                                        className={inputCls}>
+                                        <option value="">Elegir...</option>
+                                        {categories.map((c) => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Price + Discount — only when NO variants */}
+                                {!hasVariants && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
+                                                Precio <span className="text-primary">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim text-sm">$</span>
+                                                <input type="number" min="0" step="100" value={form.price}
+                                                    onChange={(e) => setForm({ ...form, price: e.target.value })}
+                                                    placeholder="8500"
+                                                    className={`${inputCls} pl-7`} />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Descuento</label>
+                                            <div className="relative">
+                                                <input type="number" min="0" max="100" step="1" value={form.discount}
+                                                    onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                                                    placeholder="0"
+                                                    className={`${inputCls} pr-8`} />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim text-sm font-semibold">%</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
-                                            Categoría <span className="text-primary">*</span>
-                                        </label>
-                                        <select value={form.category_id}
-                                            onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-                                            className={inputCls}>
-                                            <option value="">Elegir...</option>
-                                            {categories.map((c) => (
-                                                <option key={c.id} value={c.id}>{c.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
+                                )}
 
-                                {/* Discount */}
+                                {/* ── Variants section ── */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Descuento</label>
-                                    <div className="relative">
-                                        <input type="number" min="0" max="100" step="1" value={form.discount}
-                                            onChange={(e) => setForm({ ...form, discount: e.target.value })}
-                                            placeholder="0"
-                                            className={`${inputCls} pr-8`} />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim text-sm font-semibold">%</span>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest">Variantes</label>
+                                        <button
+                                            type="button"
+                                            onClick={addVariant}
+                                            className="cursor-pointer flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" />
+                                            Agregar variante
+                                        </button>
                                     </div>
+
+                                    {hasVariants ? (
+                                        <div className="flex flex-col gap-2.5">
+                                            {form.variants.map((v, idx) => (
+                                                <div key={v.id} className="flex items-start gap-2 p-3 rounded-xl border border-border bg-surface/50">
+                                                    <div className="flex-1 flex flex-col gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={v.name}
+                                                            onChange={(e) => updateVariant(idx, 'name', e.target.value)}
+                                                            placeholder="Ej: Grande"
+                                                            className={`${inputCls} text-sm py-2.5`}
+                                                        />
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div className="relative">
+                                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dim text-xs">$</span>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    step="100"
+                                                                    value={v.price}
+                                                                    onChange={(e) => updateVariant(idx, 'price', e.target.value)}
+                                                                    placeholder="Precio"
+                                                                    className={`${inputCls} text-sm py-2.5 pl-6`}
+                                                                />
+                                                            </div>
+                                                            <div className="relative">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    step="1"
+                                                                    value={v.discount}
+                                                                    onChange={(e) => updateVariant(idx, 'discount', e.target.value)}
+                                                                    placeholder="Dto %"
+                                                                    className={`${inputCls} text-sm py-2.5 pr-7`}
+                                                                />
+                                                                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-dim text-xs font-semibold">%</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeVariant(idx)}
+                                                        className="cursor-pointer p-2 text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all mt-1"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <p className="text-text-dim text-[11px] italic">El precio base se calculará automáticamente del menor precio de las variantes.</p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-text-dim text-xs">Sin variantes. El producto tendrá un precio único.</p>
+                                    )}
                                 </div>
 
-                                {/* Live preview label */}
+                                {/* Live preview */}
                                 {(form.name || imagePreview) && (
                                     <div>
                                         <label className="block text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Así se verá en el menú</label>
@@ -518,7 +720,7 @@ export default function AdminProducts() {
                                                 ) : (
                                                     <div className="w-full h-full bg-surface2" />
                                                 )}
-                                                {parseInt(form.discount) > 0 && parseInt(form.discount) <= 100 && (
+                                                {!hasVariants && parseInt(form.discount) > 0 && parseInt(form.discount) <= 100 && (
                                                     <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md">
                                                         -{parseInt(form.discount)}%
                                                     </div>
@@ -531,32 +733,69 @@ export default function AdminProducts() {
                                                 {form.description && (
                                                     <p className="text-text-muted text-[12px] leading-snug line-clamp-2 mt-1">{form.description}</p>
                                                 )}
-                                                <div className="flex items-center justify-between pt-3">
-                                                    {parseInt(form.discount) > 0 && parseInt(form.discount) <= 100 && form.price ? (
-                                                        <div className="flex flex-col">
-                                                            <div className="flex items-baseline gap-1">
-                                                                <span className="text-text-dim text-xs font-semibold">$</span>
-                                                                <span className="font-display font-bold text-primary text-xl leading-none">
-                                                                    {Math.round(Number(form.price) * (1 - parseInt(form.discount) / 100)).toLocaleString('es-AR')}
+
+                                                {hasVariants ? (
+                                                    /* Variant rows preview */
+                                                    <div className="flex flex-col gap-1.5 pt-3">
+                                                        {form.variants.filter(v => v.name || v.price).map((v, idx) => {
+                                                            const d = parseInt(v.discount) || 0;
+                                                            const vPrice = v.price ? Number(v.price) : 0;
+                                                            const effPrice = d > 0 && d <= 100 ? Math.round(vPrice * (1 - d / 100)) : vPrice;
+                                                            return (
+                                                                <div key={idx} className="flex items-center justify-between">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-text text-xs font-medium">{v.name || '...'}</span>
+                                                                        {d > 0 && d <= 100 && (
+                                                                            <span className="text-primary text-[9px] font-bold">-{d}%</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        {d > 0 && d <= 100 && vPrice > 0 && (
+                                                                            <span className="text-text-dim text-[10px] line-through">${vPrice.toLocaleString('es-AR')}</span>
+                                                                        )}
+                                                                        <div className="flex items-baseline gap-0.5">
+                                                                            <span className="text-text-dim text-[10px] font-semibold">$</span>
+                                                                            <span className="font-display font-bold text-text text-sm leading-none">
+                                                                                {effPrice ? effPrice.toLocaleString('es-AR') : '0'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <span className="flex items-center justify-center w-6 h-6 bg-primary text-white rounded-full">
+                                                                            <Plus className="w-3 h-3" strokeWidth={2.5} />
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    /* Single price preview */
+                                                    <div className="flex items-center justify-between pt-3">
+                                                        {parseInt(form.discount) > 0 && parseInt(form.discount) <= 100 && form.price ? (
+                                                            <div className="flex flex-col">
+                                                                <div className="flex items-baseline gap-1">
+                                                                    <span className="text-text-dim text-xs font-semibold">$</span>
+                                                                    <span className="font-display font-bold text-primary text-xl leading-none">
+                                                                        {Math.round(Number(form.price) * (1 - parseInt(form.discount) / 100)).toLocaleString('es-AR')}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="text-text-dim text-xs line-through mt-0.5">
+                                                                    ${Number(form.price).toLocaleString('es-AR')}
                                                                 </span>
                                                             </div>
-                                                            <span className="text-text-dim text-xs line-through mt-0.5">
-                                                                ${Number(form.price).toLocaleString('es-AR')}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-baseline gap-1">
-                                                            <span className="text-text-dim text-xs font-semibold">$</span>
-                                                            <span className="font-display font-bold text-text text-xl leading-none">
-                                                                {form.price ? Number(form.price).toLocaleString('es-AR') : '0'}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                    <span className="flex items-center gap-1.5 bg-primary text-white text-[10px] font-semibold uppercase tracking-wider px-3 py-2 rounded-full">
-                                                        <Plus className="w-3 h-3" strokeWidth={2.5} />
-                                                        Agregar
-                                                    </span>
-                                                </div>
+                                                        ) : (
+                                                            <div className="flex items-baseline gap-1">
+                                                                <span className="text-text-dim text-xs font-semibold">$</span>
+                                                                <span className="font-display font-bold text-text text-xl leading-none">
+                                                                    {form.price ? Number(form.price).toLocaleString('es-AR') : '0'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <span className="flex items-center gap-1.5 bg-primary text-white text-[10px] font-semibold uppercase tracking-wider px-3 py-2 rounded-full">
+                                                            <Plus className="w-3 h-3" strokeWidth={2.5} />
+                                                            Agregar
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

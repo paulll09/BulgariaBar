@@ -53,7 +53,8 @@ export default function Cart() {
         const phone = import.meta.env.VITE_WHATSAPP_PHONE ?? '5493716400743';
         let text = `¡Hola! Soy *${checkoutForm.name.trim()}* y quiero hacer el siguiente pedido:\n\n`;
         items.forEach(item => {
-            text += `• ${item.quantity}x ${item.name} — $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
+            const displayName = item.variantName ? `${item.name} (${item.variantName})` : item.name;
+            text += `• ${item.quantity}x ${displayName} — $${(item.price * item.quantity).toLocaleString('es-AR')}\n`;
         });
         text += orderType === 'delivery'
             ? `\n*TOTAL: $${totalPrice.toLocaleString('es-AR')} + envio*\n\n`
@@ -121,48 +122,53 @@ export default function Cart() {
 
             {/* Items */}
             <div className="space-y-2.5 mb-7">
-                {items.map((item, i) => (
-                    <div
-                        key={item.id}
-                        className="animate-fade-up flex items-center gap-3 p-3 rounded-2xl"
-                        style={{ animationDelay: `${i * 55}ms`, boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.05)' }}
-                    >
-                        <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-surface2 flex items-center justify-center">
-                            {item.image_url
-                                ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                                : <ImageIcon className="w-5 h-5 text-text-dim" />
-                            }
-                        </div>
-                        <div className="flex-grow min-w-0">
-                            <p className="font-display font-semibold text-text text-lg uppercase leading-tight">{item.name}</p>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-text-muted text-sm">${item.price.toLocaleString('es-AR')}</span>
-                                {item.originalPrice && item.originalPrice !== item.price && (
-                                    <span className="text-text-dim text-xs line-through">${item.originalPrice.toLocaleString('es-AR')}</span>
-                                )}
+                {items.map((item, i) => {
+                    const key = item.cartKey || item.id;
+                    return (
+                        <div
+                            key={key}
+                            className="animate-fade-up flex items-center gap-3 p-3 rounded-2xl"
+                            style={{ animationDelay: `${i * 55}ms`, boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.05)' }}
+                        >
+                            <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-surface2 flex items-center justify-center">
+                                {item.image_url
+                                    ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                    : <ImageIcon className="w-5 h-5 text-text-dim" />
+                                }
                             </div>
-                        </div>
-                        <div className="flex items-center gap-1 bg-cream rounded-full p-0.5 shrink-0"
-                             style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.07)' }}>
-                            <button onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                aria-label={`Reducir cantidad de ${item.name}`}
-                                className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text transition-all active:scale-90">
-                                <Minus className="w-3.5 h-3.5" />
+                            <div className="flex-grow min-w-0">
+                                <p className="font-display font-semibold text-text text-lg uppercase leading-tight">
+                                    {item.name}{item.variantName ? ` - ${item.variantName}` : ''}
+                                </p>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-text-muted text-sm">${item.price.toLocaleString('es-AR')}</span>
+                                    {item.originalPrice && item.originalPrice !== item.price && (
+                                        <span className="text-text-dim text-xs line-through">${item.originalPrice.toLocaleString('es-AR')}</span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1 bg-cream rounded-full p-0.5 shrink-0"
+                                 style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.07)' }}>
+                                <button onClick={() => updateQuantity(key, item.quantity - 1)}
+                                    aria-label={`Reducir cantidad de ${item.name}`}
+                                    className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text transition-all active:scale-90">
+                                    <Minus className="w-3.5 h-3.5" />
+                                </button>
+                                <span className="w-6 text-center text-text font-bold text-sm">{item.quantity}</span>
+                                <button onClick={() => updateQuantity(key, item.quantity + 1)}
+                                    aria-label={`Aumentar cantidad de ${item.name}`}
+                                    className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text transition-all active:scale-90">
+                                    <Plus className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                            <button onClick={() => removeItem(key)}
+                                aria-label={`Eliminar ${item.name}`}
+                                className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full text-text-dim hover:text-primary hover:bg-primary/5 transition-all shrink-0">
+                                <Trash2 className="w-4 h-4" />
                             </button>
-                            <span className="w-6 text-center text-text font-bold text-sm">{item.quantity}</span>
-                            <button onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                aria-label={`Aumentar cantidad de ${item.name}`}
-                                className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text transition-all active:scale-90">
-                                <Plus className="w-3.5 h-3.5" />
-                            </button>
                         </div>
-                        <button onClick={() => removeItem(item.id)}
-                            aria-label={`Eliminar ${item.name}`}
-                            className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full text-text-dim hover:text-primary hover:bg-primary/5 transition-all shrink-0">
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Agregar bebida — solo cuando no hay bebidas */}

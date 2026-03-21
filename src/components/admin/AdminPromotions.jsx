@@ -67,6 +67,17 @@ export default function AdminPromotions() {
         window.scrollTo(0, scrollYRef.current);
     };
 
+    // Ensure scroll is unlocked if component unmounts while modal is open
+    useEffect(() => {
+        return () => {
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.overflow = '';
+        };
+    }, []);
+
     useEffect(() => {
         if (modalOpen && formRef.current) formRef.current.scrollTop = 0;
     }, [modalOpen]);
