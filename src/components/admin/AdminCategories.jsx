@@ -31,9 +31,11 @@ export default function AdminCategories() {
         };
     }, []);
 
+    const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
+
     const fetchCategories = async () => {
         setLoading(true);
-        const { data, error } = await supabase.from('categories').select('*').order('display_order');
+        const { data, error } = await supabase.from('categories').select('*').eq('business_id', BUSINESS_ID).order('display_order');
         if (error) toast.error(error.message);
         else setCategories(data);
         setLoading(false);
@@ -96,7 +98,7 @@ export default function AdminCategories() {
                 if (error) throw error;
                 toast.success('Categoría actualizada');
             } else {
-                const { error } = await supabase.from('categories').insert(payload);
+                const { error } = await supabase.from('categories').insert({ ...payload, business_id: BUSINESS_ID });
                 if (error) throw error;
                 toast.success('Categoría creada');
             }

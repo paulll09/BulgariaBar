@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
 
 /**
  * Fetches promotions from Supabase.
@@ -17,7 +18,7 @@ export function usePromotions(adminMode = false) {
         setError(null);
 
         try {
-            let query = supabase.from('promotions').select('*').order('display_order');
+            let query = supabase.from('promotions').select('*').eq('business_id', BUSINESS_ID).order('display_order');
 
             if (!adminMode) {
                 const todayKey = DAY_KEYS[new Date().getDay()];

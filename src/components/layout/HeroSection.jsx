@@ -11,9 +11,9 @@ export default function HeroSection() {
     const d = (base) => `${hadLoader ? LOADER_DURATION + base : base}ms`;
     const [fixedH, setFixedH] = useState(null);
 
-    // Capture viewport height once on mount — immune to in-app browser chrome resize
     useEffect(() => {
-        setFixedH(window.innerHeight);
+        const h = window.visualViewport?.height ?? window.innerHeight;
+        setFixedH(h);
     }, []);
 
     const scrollToMenu = () => {
@@ -22,25 +22,24 @@ export default function HeroSection() {
 
     return (
         <section
-            className="relative w-full overflow-hidden flex flex-col items-center justify-center bg-black hero-fullscreen"
+            className="relative w-full overflow-hidden flex flex-col items-center justify-center bg-black"
             style={{
                 contain: 'layout style paint',
-                ...(fixedH ? { height: fixedH, minHeight: fixedH } : {}),
+                height: fixedH ?? 'var(--stable-vh, 100svh)',
+                minHeight: fixedH ?? 'var(--stable-vh, 100svh)',
             }}
         >
-            {/* Imagen de fondo — GPU-composited, fixed size to avoid reflow */}
+            {/* Imagen de fondo */}
             <div
+                className="animate-hero-bg"
                 style={{
                     position: 'absolute',
                     inset: '-5%',
                     backgroundImage: "url('/images/bulhero2.jpeg')",
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    animation: 'hero-bg-reveal 1.6s cubic-bezier(0.16, 1, 0.3, 1) both',
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
                     transform: 'translateZ(0)',
-                    willChange: 'transform',
+                    backfaceVisibility: 'hidden',
                 }}
             />
 
@@ -106,10 +105,13 @@ export default function HeroSection() {
                 </div>
             </div>
 
-            {/* Flecha roja animada */}
+            {/* Gradiente inferior — funde el hero con la sección negra */}
+            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black to-transparent pointer-events-none" style={{ zIndex: 2 }} />
+
+            {/* Flecha roja animada — flota sobre el gradiente */}
             <button
                 onClick={scrollToMenu}
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce-arrow cursor-pointer transition-opacity hover:opacity-100"
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-hero-float cursor-pointer transition-opacity hover:opacity-100"
                 style={{ zIndex: 3, opacity: 0.85 }}
                 aria-label="Ir al menú"
             >

@@ -1,49 +1,25 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useProducts } from '../../hooks/useProducts';
+import { motion } from 'framer-motion';
 import ProductCard from './ProductCard';
+import { hasDiscount, variantHasDiscount } from '../../utils/price';
+import { MotionDiv, slideLeft, scaleIn, staggerContainer, VIEWPORT } from '../../lib/motion';
 
-function ScrollReveal({ children, delay = 0, animClass = 'animate-fade-up' }) {
-    const ref = useRef(null);
-    const [visible, setVisible] = useState(false);
-    useEffect(() => {
-        const el = ref.current;
-        if (!el) return;
+const OFERTAS_ID = 'ofertas';
 
-        // Fallback: if IntersectionObserver doesn't fire (e.g. in-app browsers),
-        // force content visible after a short timeout
-        const fallback = setTimeout(() => setVisible(true), 1500 + delay);
-
-        if (typeof IntersectionObserver === 'undefined') {
-            return () => clearTimeout(fallback);
-        }
-
-        const obs = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    setVisible(true);
-                    obs.disconnect();
-                    clearTimeout(fallback);
-                }
-            },
-            { rootMargin: '0px 0px -40px 0px', threshold: 0.05 }
-        );
-        obs.observe(el);
-        return () => { obs.disconnect(); clearTimeout(fallback); };
-    }, [delay]);
-    return (
-        <div
-            ref={ref}
-            className={visible ? animClass : ''}
-            style={visible ? { animationDelay: `${delay}ms` } : { opacity: 0 }}
-        >
-            {children}
-        </div>
+export default function Menu({ products, categories: rawCategories, loading, error, refetch }) {
+    // Filter discounted products for virtual "Ofertas" category
+    const discountedProducts = useMemo(
+        () => products.filter(p => hasDiscount(p) || (p.product_variants || []).some(v => variantHasDiscount(v))),
+        [products],
     );
-}
 
-export default function Menu() {
-    const { products, categories, loading, error, refetch } = useProducts(false);
+    // Prepend virtual "Ofertas" tab only when there are discounted products
+    const categories = useMemo(() => {
+        if (discountedProducts.length === 0) return rawCategories;
+        return [{ id: OFERTAS_ID, name: 'Promos' }, ...rawCategories];
+    }, [rawCategories, discountedProducts.length]);
+
     const [activeCategory, setActiveCategory] = useState(null);
     const sectionRefs = useRef({});
     const tabsRef = useRef(null);
@@ -64,8 +40,6 @@ export default function Menu() {
     }, [categories]);
 
     // Track active category via scroll — rAF-throttled (once per frame).
-    // Uses hysteresis so the active tab only changes when a new section is
-    // clearly dominant, avoiding rapid flickering at section boundaries.
     useEffect(() => {
         if (!categories.length) return;
 
@@ -75,9 +49,7 @@ export default function Menu() {
             ticking = false;
             if (isProgrammaticScroll.current) return;
 
-            // The "trigger line" sits at 35% of the viewport height.
-            // Whichever section's top is closest to this line wins.
-            const trigger = window.innerHeight * 0.35;
+            const trigger = (window.visualViewport?.height ?? window.innerHeight) * 0.35;
             let best = null;
             let bestDist = Infinity;
 
@@ -85,8 +57,8 @@ export default function Menu() {
                 const el = sectionRefs.current[cat.id];
                 if (!el) continue;
                 const rect = el.getBoundingClientRect();
-                // Skip sections completely off-screen
-                if (rect.bottom < 0 || rect.top > window.innerHeight) continue;
+                const vh = window.visualViewport?.height ?? window.innerHeight;
+                if (rect.bottom < 0 || rect.top > vh) continue;
                 const dist = Math.abs(rect.top - trigger);
                 if (dist < bestDist) {
                     bestDist = dist;
@@ -97,9 +69,6 @@ export default function Menu() {
             if (best !== null) {
                 setActiveCategory(prev => {
                     if (prev === best) return prev;
-                    // Hysteresis: the new section must be at least 60px closer
-                    // than the current one before we switch. This prevents
-                    // flickering right at the boundary between two sections.
                     const currentEl = sectionRefs.current[prev];
                     if (currentEl) {
                         const currentDist = Math.abs(currentEl.getBoundingClientRect().top - trigger);
@@ -142,7 +111,6 @@ export default function Menu() {
 
         setActiveCategory(id);
 
-        // Offset: tabs height only (no navbar)
         const tabsEl = tabsRef.current?.parentElement;
         const tabsHeight = tabsEl ? tabsEl.offsetHeight : 44;
         const top = el.getBoundingClientRect().top + window.scrollY - tabsHeight;
@@ -159,14 +127,12 @@ export default function Menu() {
         const btn = btnRefs.current[activeCategory];
         if (!container || !btn) return;
 
-        // Pill slides to the active button
         setPillStyle({
             left: btn.offsetLeft,
             width: btn.offsetWidth,
             opacity: 1,
         });
 
-        // Center the active tab horizontally
         const scrollTarget = btn.offsetLeft - (container.offsetWidth / 2) + (btn.offsetWidth / 2);
         container.scrollTo({ left: scrollTarget, behavior: 'smooth' });
     }, [activeCategory]);
@@ -181,7 +147,7 @@ export default function Menu() {
             >
                 <div
                     ref={tabsRef}
-                    className="relative flex gap-2 px-4 sm:px-6 py-2.5 overflow-x-auto hide-scrollbar"
+                    className="relative flex gap-1.5 px-3 sm:px-6 py-2 overflow-x-auto hide-scrollbar"
                 >
                     {/* Sliding pill indicator */}
                     <div
@@ -190,7 +156,7 @@ export default function Menu() {
                             left: pillStyle.left,
                             width: pillStyle.width,
                             top: '50%',
-                            height: 'calc(100% - 20px)',
+                            height: 'calc(100% - 16px)',
                             transform: 'translateY(-50%)',
                             opacity: pillStyle.opacity,
                             transition: 'left 0.35s cubic-bezier(0.25, 1, 0.5, 1), width 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease',
@@ -207,7 +173,7 @@ export default function Menu() {
                                 ref={(el) => { btnRefs.current[cat.id] = el; }}
                                 data-active={active}
                                 onClick={() => scrollToCategory(cat.id)}
-                                className="cursor-pointer relative z-10 shrink-0 px-4 py-2.5 rounded-full text-xs font-semibold uppercase tracking-widest transition-colors duration-300 active:scale-95"
+                                className="cursor-pointer relative z-10 shrink-0 px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-colors duration-300 active:scale-95"
                                 style={active
                                     ? { color: 'var(--color-bg)' }
                                     : { color: 'var(--color-text-muted)', boxShadow: '0 0 0 1px rgba(0,0,0,0.07)', background: 'var(--color-cream)' }
@@ -223,9 +189,9 @@ export default function Menu() {
             {/* ── Sections ──────────────────────────── */}
             <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 flex flex-col gap-12 pt-10">
                 {loading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} className="rounded-2xl bg-surface animate-pulse h-48" />
+                    <div className="flex flex-col gap-4">
+                        {[...Array(4)].map((_, i) => (
+                            <div key={i} className="rounded-2xl bg-surface animate-pulse h-28" />
                         ))}
                     </div>
                 ) : error ? (
@@ -240,7 +206,9 @@ export default function Menu() {
                     </div>
                 ) : (
                     categories.map((cat) => {
-                        const catProducts = products.filter(p => p.category_id === cat.id);
+                        const catProducts = cat.id === OFERTAS_ID
+                            ? discountedProducts
+                            : products.filter(p => p.category_id === cat.id);
                         if (catProducts.length === 0) return null;
 
                         return (
@@ -248,22 +216,28 @@ export default function Menu() {
                                 key={cat.id}
                                 ref={(el) => { sectionRefs.current[cat.id] = el; }}
                             >
-                                <ScrollReveal animClass="animate-slide-left">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <h2 className="font-display font-semibold text-text text-2xl sm:text-3xl uppercase shrink-0">
-                                        {cat.name}
-                                    </h2>
-                                    <div className="flex-1 h-px bg-border" />
-                                </div>
-                                </ScrollReveal>
+                                <MotionDiv variants={slideLeft}>
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <h2 className="font-display font-semibold text-text text-2xl sm:text-3xl uppercase shrink-0">
+                                            {cat.name}
+                                        </h2>
+                                        <div className="flex-1 h-px bg-border" />
+                                    </div>
+                                </MotionDiv>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                                    {catProducts.map((product, pIdx) => (
-                                        <ScrollReveal key={product.id} delay={pIdx * 70}>
+                                <motion.div
+                                    className="flex flex-col gap-5"
+                                    initial="hidden"
+                                    whileInView="visible"
+                                    viewport={VIEWPORT}
+                                    variants={staggerContainer}
+                                >
+                                    {catProducts.map((product) => (
+                                        <MotionDiv key={product.id} variants={scaleIn}>
                                             <ProductCard product={product} categoryName={cat.name} />
-                                        </ScrollReveal>
+                                        </MotionDiv>
                                     ))}
-                                </div>
+                                </motion.div>
                             </section>
                         );
                     })

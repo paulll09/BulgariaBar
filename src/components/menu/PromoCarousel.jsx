@@ -1,35 +1,52 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePromotions } from '../../hooks/usePromotions';
+import { lineStagger, lineSlideUp, VIEWPORT } from '../../lib/motion';
 
 /* ── Heading (shared between single & multi) ── */
 function Heading() {
     return (
-        <div className="flex items-center gap-4 mb-5 px-4 sm:px-6">
-            <h2 className="font-display font-semibold text-white text-2xl sm:text-3xl uppercase shrink-0">
-                Promos
-            </h2>
-            <div className="flex-1 h-px bg-white/20" />
-        </div>
+        <motion.div
+            className="text-center mb-8 px-4 sm:px-6"
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT}
+            variants={lineStagger}
+        >
+            <motion.span
+                className="block font-display font-bold uppercase text-white text-4xl sm:text-5xl md:text-6xl leading-[1.05]"
+                variants={lineSlideUp}
+            >
+                Conocé nuestras
+            </motion.span>
+            <motion.span
+                className="block font-display font-bold uppercase text-primary text-4xl sm:text-5xl md:text-6xl leading-[1.05] mt-1"
+                variants={lineSlideUp}
+            >
+                promos
+            </motion.span>
+
+        </motion.div>
     );
 }
 
 /* ── Promo image card ── */
-const PromoCard = memo(function PromoCard({ promo, onClick }) {
+const PromoCard = memo(function PromoCard({ promo, onClick, single }) {
     const [loaded, setLoaded] = useState(false);
     return (
         <button
             onClick={onClick}
-            className="cursor-pointer shrink-0 rounded-2xl overflow-hidden border-none p-0 transition-shadow duration-300 hover:shadow-[0_8px_24px_rgba(255,255,255,0.08)] active:scale-[0.97]"
+            className={`cursor-pointer rounded-2xl overflow-hidden border-none p-0 transition-shadow duration-300 hover:shadow-[0_8px_24px_rgba(255,255,255,0.08)] active:scale-[0.97] ${single ? 'w-full max-w-md' : 'shrink-0'}`}
             aria-label={`Ver promo: ${promo.title}`}
         >
             <div className={`rounded-2xl overflow-hidden ${!loaded ? 'bg-white/5 animate-pulse' : ''}`}
-                 style={{ height: 'min(50vh, 360px)' }}>
+                 style={{ height: single ? 'min(calc(var(--stable-vh) * 0.55), 420px)' : 'min(calc(var(--stable-vh) * 0.5), 360px)' }}>
                 <img
                     src={promo.image_url}
                     alt={promo.title}
-                    className={`block h-full w-auto rounded-2xl object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+                    className={`block h-full rounded-2xl object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'} ${single ? 'w-full' : 'w-auto'}`}
                     loading="lazy"
                     decoding="async"
                     onLoad={() => setLoaded(true)}
@@ -42,78 +59,42 @@ const PromoCard = memo(function PromoCard({ promo, onClick }) {
 export default function PromoCarousel() {
     const { promotions, loading } = usePromotions(false);
     const trackRef = useRef(null);
-    const rafRef = useRef(null);
-    const offsetRef = useRef(0);
-    const pausedRef = useRef(false);
     const [lightbox, setLightbox] = useState(null);
     const [trackWidth, setTrackWidth] = useState(0);
-    const [isVisible, setIsVisible] = useState(false);
+    const [paused, setPaused] = useState(false);
 
     const count = promotions.length;
-    const SPEED = 0.4;
     const GAP = 12;
 
-    /* ── IntersectionObserver: only animate when visible (saves battery) ── */
-    useEffect(() => {
-        const el = trackRef.current?.parentElement;
-        if (!el) return;
-        const io = new IntersectionObserver(
-            ([entry]) => setIsVisible(entry.isIntersecting),
-            { threshold: 0.1 }
-        );
-        io.observe(el);
-        return () => io.disconnect();
-    }, [count]);
-
-    /* ── Measure one full set width ── */
+    /* ── Measure one full set width (ResizeObserver fires after images load) ── */
     useEffect(() => {
         if (count <= 1) return;
+        const track = trackRef.current;
+        if (!track) return;
+
         const measure = () => {
-            const track = trackRef.current;
-            if (!track) return;
             let w = 0;
             for (let i = 0; i < count; i++) {
                 const child = track.children[i];
                 if (child) w += child.offsetWidth + GAP;
             }
-            setTrackWidth(w);
+            if (w > 0) setTrackWidth(w);
         };
-        // Wait for images to load then measure
-        const timer = setTimeout(measure, 100);
-        window.addEventListener('resize', measure);
-        return () => {
-            clearTimeout(timer);
-            window.removeEventListener('resize', measure);
-        };
-    }, [count, promotions]);
 
-    /* ── RAF animation loop (GPU-accelerated via transform) ── */
-    const animate = useCallback(() => {
-        if (!pausedRef.current && trackWidth > 0 && isVisible) {
-            offsetRef.current += SPEED;
-            if (offsetRef.current >= trackWidth) {
-                offsetRef.current -= trackWidth;
-            }
-            if (trackRef.current) {
-                trackRef.current.style.transform = `translate3d(${-offsetRef.current}px, 0, 0)`;
-            }
+        // ResizeObserver: fires immediately and re-fires whenever a card resizes
+        // (e.g. after lazy images load and change the card's intrinsic width)
+        const ro = new ResizeObserver(measure);
+        for (let i = 0; i < count; i++) {
+            if (track.children[i]) ro.observe(track.children[i]);
         }
-        rafRef.current = requestAnimationFrame(animate);
-    }, [trackWidth, isVisible]);
+        measure(); // initial synchronous pass
 
-    useEffect(() => {
-        if (count <= 1 || trackWidth === 0) return;
-        rafRef.current = requestAnimationFrame(animate);
-        return () => {
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        };
-    }, [animate, count, trackWidth]);
-
-    /* ── Pause / Resume (only via lightbox) ── */
+        return () => ro.disconnect();
+    }, [count, promotions]);
 
     /* ── Lightbox ── */
     const openLightbox = useCallback((index) => {
-        pausedRef.current = true;
+        setPaused(true);
         setLightbox(index % count);
         document.body.style.overflow = 'hidden';
     }, [count]);
@@ -121,7 +102,7 @@ export default function PromoCarousel() {
     const closeLightbox = useCallback(() => {
         setLightbox(null);
         document.body.style.overflow = '';
-        setTimeout(() => { pausedRef.current = false; }, 500);
+        setTimeout(() => { setPaused(false); }, 500);
     }, []);
 
     const lightboxPrev = useCallback(() => {
@@ -151,10 +132,11 @@ export default function PromoCarousel() {
             <div className="bg-black py-8">
                 <div className="max-w-6xl mx-auto">
                     <Heading />
-                    <div className="px-4 sm:px-6">
+                    <div className="px-4 sm:px-6 flex justify-center">
                         <PromoCard
                             promo={promotions[0]}
                             onClick={() => openLightbox(0)}
+                            single
                         />
                     </div>
                 </div>
@@ -176,6 +158,9 @@ export default function PromoCarousel() {
     /* ── Multiple promos — infinite marquee ── */
     const items = [...promotions, ...promotions, ...promotions];
 
+    /* CSS animation: duration = distance / speed. SPEED ~0.4px/frame@60fps = 24px/s */
+    const duration = trackWidth > 0 ? trackWidth / 24 : 0;
+
     return (
         <div className="bg-black py-8">
             <div className="max-w-6xl mx-auto">
@@ -187,11 +172,15 @@ export default function PromoCarousel() {
                     role="region"
                     aria-label="Carrusel de promociones"
                 >
-                    {/* Track — moves via translate3d */}
+                    {/* Track — moves via CSS animation (runs on compositor thread) */}
                     <div
                         ref={trackRef}
-                        className="flex gap-3 will-change-transform"
-                        style={{ transform: 'translate3d(0, 0, 0)' }}
+                        className="flex gap-3 promo-track"
+                        style={trackWidth > 0 ? {
+                            '--marquee-dist': `-${trackWidth}px`,
+                            animation: `promo-marquee ${duration}s linear infinite`,
+                            animationPlayState: paused ? 'paused' : 'running',
+                        } : undefined}
                     >
                         {items.map((promo, i) => (
                             <PromoCard
@@ -309,7 +298,7 @@ const Lightbox = memo(function Lightbox({ promotions, index, count, onClose, onP
                     src={promo.image_url}
                     alt={promo.title}
                     className="w-full h-auto rounded-2xl shadow-2xl select-none"
-                    style={{ maxHeight: '85vh', objectFit: 'contain' }}
+                    style={{ maxHeight: 'calc(var(--stable-vh) * 0.85)', objectFit: 'contain' }}
                     draggable={false}
                 />
             </div>

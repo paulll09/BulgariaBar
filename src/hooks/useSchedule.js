@@ -13,6 +13,8 @@ const DUMMY_SCHEDULE = {
     sunday:    { open: true,  from: '20:00', to: '00:00' },
 };
 
+const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
+
 function isSupabaseConfigured() {
     const url = import.meta.env.VITE_SUPABASE_URL;
     return url && url !== 'https://tu-proyecto.supabase.co';
@@ -77,7 +79,7 @@ export function useSchedule() {
             const { data, error } = await supabase
                 .from('settings')
                 .select('schedule')
-                .eq('id', 1)
+                .eq('business_id', BUSINESS_ID)
                 .single();
             if (error) throw error;
             const scheduleData = data?.schedule;
@@ -93,7 +95,7 @@ export function useSchedule() {
         const { error } = await supabase
             .from('settings')
             .update({ schedule: newSchedule })
-            .eq('id', 1);
+            .eq('business_id', BUSINESS_ID);
         if (error) throw error;
         setSchedule(newSchedule);
     };

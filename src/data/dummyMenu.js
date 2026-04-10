@@ -13,6 +13,7 @@ export const dummyProducts = [
         image_url: '/images/hamburguesaDoble1.jpg',
         category_id: '1',
         product_variants: [],
+        discount: 20,
     },
     {
         id: 'p2',
@@ -49,6 +50,7 @@ export const dummyProducts = [
         image_url: '/images/pizza.jpg',
         category_id: '2',
         product_variants: [],
+        discount: 10,
     },
     {
         id: 'p7',
@@ -58,7 +60,7 @@ export const dummyProducts = [
         image_url: '/images/papasCheddar.jpg',
         category_id: '2',
         product_variants: [
-            { id: 'v1', product_id: 'p7', name: 'Chica', price: 4500, discount: 0, display_order: 0 },
+            { id: 'v1', product_id: 'p7', name: 'Chica', price: 4500, discount: 15, display_order: 0 },
             { id: 'v2', product_id: 'p7', name: 'Grande', price: 6500, discount: 0, display_order: 1 },
         ],
     },

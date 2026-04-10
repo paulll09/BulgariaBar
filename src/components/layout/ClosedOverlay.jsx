@@ -7,7 +7,8 @@ const DAY_LABELS_ES = {
     thursday: 'Jueves', friday: 'Viernes', saturday: 'Sábado', sunday: 'Domingo',
 };
 const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-const SESSION_KEY = 'bar_closed_dismissed';
+// Key includes today's date — dismissal expires at midnight automatically
+const SESSION_KEY = `bar_closed_dismissed_${new Date().toLocaleDateString('es-AR')}`;
 
 export default function ClosedOverlay({ schedule }) {
     const [dismissed, setDismissed] = useState(

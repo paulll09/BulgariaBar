@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { dummyProducts, dummyCategories } from '../data/dummyMenu';
 
+const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
+
 const isSupabaseConfigured = () => {
     const url = import.meta.env.VITE_SUPABASE_URL;
     return url && url !== 'https://tu-proyecto.supabase.co';
@@ -40,21 +42,21 @@ export function useProducts(adminMode = false) {
 
         try {
             // Fetch categories
-            const catRes = await supabase.from('categories').select('*').order('display_order');
+            const catRes = await supabase.from('categories').select('*').eq('business_id', BUSINESS_ID).order('display_order');
             if (catRes.error) throw catRes.error;
 
             // Try fetching products with variants first
             const prodQuery = adminMode
-                ? supabase.from('products').select('*, product_variants(*)').order('created_at')
-                : supabase.from('products').select('*, product_variants(*)').eq('visible', true).order('created_at');
+                ? supabase.from('products').select('*, product_variants(*)').eq('business_id', BUSINESS_ID).order('created_at')
+                : supabase.from('products').select('*, product_variants(*)').eq('business_id', BUSINESS_ID).eq('visible', true).order('created_at');
 
             let prodRes = await prodQuery;
 
             // If variants table doesn't exist, fetch products without variants
             if (prodRes.error) {
                 const fallbackQuery = adminMode
-                    ? supabase.from('products').select('*').order('created_at')
-                    : supabase.from('products').select('*').eq('visible', true).order('created_at');
+                    ? supabase.from('products').select('*').eq('business_id', BUSINESS_ID).order('created_at')
+                    : supabase.from('products').select('*').eq('business_id', BUSINESS_ID).eq('visible', true).order('created_at');
 
                 prodRes = await fallbackQuery;
                 if (prodRes.error) throw prodRes.error;

@@ -31,6 +31,7 @@ function resizeImage(file) {
 }
 
 
+const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
 const EMPTY_FORM = { name: '', description: '', price: '', category_id: '', image_url: '', discount: 0, variants: [] };
 
 export default function AdminProducts() {
@@ -246,7 +247,7 @@ export default function AdminProducts() {
                 if (error) throw error;
                 productId = editing.id;
             } else {
-                const { data, error } = await supabase.from('products').insert({ ...payload, visible: true }).select('id').single();
+                const { data, error } = await supabase.from('products').insert({ ...payload, visible: true, business_id: BUSINESS_ID }).select('id').single();
                 if (error) throw error;
                 productId = data.id;
             }

@@ -38,6 +38,9 @@
 html {
   background-color: #ffffff;
   overscroll-behavior: none;
+  scroll-behavior: smooth;
+  /* Prevent layout shift when in-app browser (Instagram/TikTok) chrome resizes viewport */
+  overflow-anchor: none;
 }
 
 body {
@@ -50,6 +53,8 @@ body {
   overflow-x: hidden;
   overscroll-behavior-y: contain;
   -webkit-tap-highlight-color: transparent;
+  /* Prevent body from resizing with dynamic viewport changes in WebViews */
+  overflow-anchor: none;
 }
 
 /* ── Prevent iOS auto-zoom on inputs ───── */
@@ -74,6 +79,11 @@ button, a, [role="button"] {
   font-family: 'Inter', system-ui, sans-serif;
 }
 
+.font-headline {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-weight: 700;
+}
+
 /* ── Scrollbar ────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--color-cream); }
@@ -82,44 +92,7 @@ button, a, [role="button"] {
 /* ── Selection ────────────────────────────── */
 ::selection { background: rgba(217, 0, 9, 0.15); }
 
-/* ── Hero fullscreen — robust for in-app browsers (Instagram, TikTok, etc.) ── */
-.hero-fullscreen {
-  min-height: 100vh;
-  height: 100vh;
-  overflow: hidden;
-  /* Prevent the section from triggering layout when viewport chrome resizes */
-  overflow-anchor: none;
-}
-@supports (height: 100svh) {
-  .hero-fullscreen {
-    min-height: 100svh;
-    height: 100svh;
-  }
-}
-/* Extra fallback for older iOS WebViews */
-@supports (-webkit-touch-callout: none) and (not (height: 100svh)) {
-  .hero-fullscreen {
-    min-height: -webkit-fill-available;
-    height: -webkit-fill-available;
-  }
-}
-
 /* ── Animations ───────────────────────────── */
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(18px) translateZ(0); }
-  to   { opacity: 1; transform: translateY(0) translateZ(0); }
-}
-.animate-fade-up {
-  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-36px) translateZ(0); }
-  to   { opacity: 1; transform: translateX(0) translateZ(0); }
-}
-.animate-slide-left {
-  animation: slide-in-left 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
 
 @keyframes slide-down {
   from { opacity: 0; transform: translateY(-14px); }
@@ -154,6 +127,16 @@ button, a, [role="button"] {
   animation: bounce-arrow 1.6s ease-in-out infinite;
 }
 
+/* ── Hero — floating arrow with glow ── */
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0);   opacity: 0.7; }
+  50%      { transform: translateY(8px); opacity: 1; }
+}
+.animate-hero-float {
+  animation: hero-float 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  filter: drop-shadow(0 0 6px rgba(217, 0, 9, 0.5));
+}
+
 @keyframes hero-fade-in {
   from { opacity: 0; transform: translateY(22px) translateZ(0); }
   to   { opacity: 1; transform: translateY(0) translateZ(0); }
@@ -180,10 +163,13 @@ button, a, [role="button"] {
   animation: hero-title-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* ── Hero — background: initial reveal ── */
-@keyframes hero-bg-reveal {
-  from { opacity: 0; transform: scale(1.14) translate(0px, 0px); }
-  to   { opacity: 1; transform: scale(1.04) translate(0px, 0px); }
+/* ── Hero — background: scale reveal with depth ── */
+@keyframes hero-bg-in {
+  from { opacity: 0; transform: scale(1.12) translateZ(0); }
+  to   { opacity: 1; transform: scale(1.04) translateZ(0); }
+}
+.animate-hero-bg {
+  animation: hero-bg-in 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes kenburns-right {
@@ -248,6 +234,26 @@ button, a, [role="button"] {
   100% { transform: scale(1.10) translate(-10px, -6px); }
 }
 
+/* ── Promo section — arrow bounce ── */
+@keyframes promo-arrow-bounce {
+  0%, 100% { transform: translateY(0);    opacity: 0.75; }
+  45%       { transform: translateY(9px);  opacity: 1;    }
+  70%       { transform: translateY(4px);  opacity: 0.9;  }
+}
+.animate-promo-arrow {
+  animation: promo-arrow-bounce 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+/* ── Promo marquee — distance driven by CSS custom property ── */
+@keyframes promo-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(var(--marquee-dist, 0px), 0, 0); }
+}
+.promo-track {
+  will-change: transform;
+}
+
 /* ── Confirm dialog animations ───────────── */
 @keyframes slide-up-modal {
   from { opacity: 0; transform: translateY(24px) scale(0.96); }
@@ -273,17 +279,80 @@ button, a, [role="button"] {
   animation: fade-out 0.2s ease-in forwards;
 }
 
+/* ── Product card styles ─────────────────── */
+
+/* Card container — only transform is GPU-composited, no will-change to save memory */
+.product-card {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+  transition: transform 0.2s ease;
+  transform: translateZ(0);  /* promote once, stays promoted */
+}
+.product-card:active {
+  transform: scale(0.975) translateZ(0);
+}
+
+/* Gradient overlay — static, no runtime cost */
+.card-gradient {
+  background: linear-gradient(to top,
+    rgba(0,0,0,0.75) 0%,
+    rgba(0,0,0,0.40) 35%,
+    rgba(0,0,0,0.06) 60%,
+    transparent 100%
+  );
+}
+
+/* Shimmer loading — uses transform (GPU) instead of background-position */
+.card-shimmer {
+  background: linear-gradient(
+    110deg,
+    var(--color-surface2) 30%,
+    var(--color-cream) 50%,
+    var(--color-surface2) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Price pill — solid bg, no backdrop-filter (heavy on low-end GPU) */
+.price-pill {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+/* Discount badge — subtle static shadow, no continuous animation */
+.badge-glow {
+  box-shadow: 0 2px 10px rgba(217,0,9,0.35);
+}
+
+/* Add button — only transition transform (GPU), not box-shadow */
+.add-btn {
+  box-shadow: 0 3px 12px rgba(217,0,9,0.35), 0 0 0 2.5px rgba(255,255,255,0.13);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Variant row stagger — lightweight opacity + translateX */
+.variant-row {
+  animation: variant-slide 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes variant-slide {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 /* ── Hide scrollbar utility (cross-browser) ─ */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ── Fallback: ensure content is visible even if animations fail ── */
 @supports not (animation-fill-mode: both) {
-  .animate-fade-up,
-  .animate-slide-left,
   .animate-hero-fade,
   .animate-hero-logo,
-  .animate-hero-title {
+  .animate-hero-title,
+  .animate-hero-bg {
     opacity: 1 !important;
     transform: none !important;
   }

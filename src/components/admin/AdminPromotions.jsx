@@ -33,6 +33,7 @@ function resizeImage(file) {
     });
 }
 
+const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
 const EMPTY_FORM = { title: '', image_url: '', days: [], display_order: 0 };
 
 export default function AdminPromotions() {
@@ -194,7 +195,7 @@ export default function AdminPromotions() {
                 if (error) throw error;
                 toast.success('Promo actualizada');
             } else {
-                const { error } = await supabase.from('promotions').insert({ ...payload, active: true });
+                const { error } = await supabase.from('promotions').insert({ ...payload, active: true, business_id: BUSINESS_ID });
                 if (error) throw error;
                 toast.success('Promo creada');
             }
