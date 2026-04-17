@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, User, Users, Calendar, Clock, MessageCircle, Info } from 'lucide-react';
 import { BarCtx } from '../context/barCtx';
+import { WHATSAPP_PHONE } from '../lib/config';
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -63,7 +64,7 @@ export default function ReservationPage() {
 
     const handleSubmit = () => {
         if (!validate()) return;
-        const phone = import.meta.env.VITE_WHATSAPP_PHONE ?? '5493716400743';
+        const phone = WHATSAPP_PHONE;
         const dateStr = new Date(form.date + 'T12:00:00').toLocaleDateString('es-AR', {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
         });

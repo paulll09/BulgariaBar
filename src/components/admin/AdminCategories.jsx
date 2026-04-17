@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit2, Trash2, X, GripVertical } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { BUSINESS_ID } from '../../lib/config';
 import toast from 'react-hot-toast';
 import { inputCls } from '../../utils/styles';
 import { useConfirm } from '../ui/ConfirmDialog';
@@ -30,8 +31,6 @@ export default function AdminCategories() {
             document.body.style.width = '';
         };
     }, []);
-
-    const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
 
     const fetchCategories = async () => {
         setLoading(true);

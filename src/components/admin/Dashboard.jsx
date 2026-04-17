@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useProducts } from '../../hooks/useProducts';
+import { useFeatures } from '../../context/featuresCtx';
 import { LogOut, Package, Tags, Clock, QrCode, Megaphone } from 'lucide-react';
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    const features = useFeatures();
     const { products, loading } = useProducts(true);
     const visibleCount = products.filter(p => p.visible).length;
     const hiddenCount = products.length - visibleCount;
@@ -54,12 +56,12 @@ export default function Dashboard() {
                     description="Configurá los días y horarios de apertura del bar."
                     onClick={() => navigate('/admin/hours')}
                 />
-                <DashboardCard
+                {features.promotions && <DashboardCard
                     icon={<Megaphone className="w-7 h-7 text-primary" />}
                     title="Promociones"
                     description="Gestioná promociones por día de la semana."
                     onClick={() => navigate('/admin/promotions')}
-                />
+                />}
                 <DashboardCard
                     icon={<QrCode className="w-7 h-7 text-primary" />}
                     title="Código QR"

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCartStore } from '../../store/cartStore';
+import { WHATSAPP_PHONE } from '../../lib/config';
 import { Minus, Plus, Trash2, ArrowLeft, MessageCircle, User, MapPin, CreditCard, AlignLeft, Wine, Store, Truck, LocateFixed, Image as ImageIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -50,7 +51,7 @@ export default function Cart() {
 
     const handleCheckout = () => {
         if (!orderType || !validate()) return;
-        const phone = import.meta.env.VITE_WHATSAPP_PHONE ?? '5493716400743';
+        const phone = WHATSAPP_PHONE;
         let text = `¡Hola! Soy *${checkoutForm.name.trim()}* y quiero hacer el siguiente pedido:\n\n`;
         items.forEach(item => {
             const displayName = item.variantName ? `${item.name} (${item.variantName})` : item.name;

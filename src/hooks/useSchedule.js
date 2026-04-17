@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { DEFAULT_FEATURES } from '../context/featuresCtx';
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -13,7 +14,7 @@ const DUMMY_SCHEDULE = {
     sunday:    { open: true,  from: '20:00', to: '00:00' },
 };
 
-const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
+import { BUSINESS_ID } from '../lib/config';
 
 function isSupabaseConfigured() {
     const url = import.meta.env.VITE_SUPABASE_URL;
@@ -62,6 +63,7 @@ export function computeIsOpen(schedule) {
 
 export function useSchedule() {
     const [schedule, setSchedule] = useState(null);
+    const [features, setFeatures] = useState(DEFAULT_FEATURES);
     const [loading, setLoading]   = useState(true);
     const [error, setError]       = useState(null);
 
@@ -78,12 +80,13 @@ export function useSchedule() {
         try {
             const { data, error } = await supabase
                 .from('settings')
-                .select('schedule')
+                .select('schedule, features')
                 .eq('business_id', BUSINESS_ID)
                 .single();
             if (error) throw error;
             const scheduleData = data?.schedule;
             setSchedule(scheduleData && typeof scheduleData === 'object' ? scheduleData : DUMMY_SCHEDULE);
+            setFeatures({ ...DEFAULT_FEATURES, ...(data?.features || {}) });
         } catch (err) {
             setError(err.message);
         } finally {
@@ -104,6 +107,7 @@ export function useSchedule() {
 
     return {
         schedule,
+        features,
         loading,
         error,
         isOpen: computeIsOpen(schedule),

@@ -1,3 +1,6 @@
+# Runtime config por deployment — NUNCA subir a Git
+public/config.js
+
 # Environment variables
 .env
 .env.local

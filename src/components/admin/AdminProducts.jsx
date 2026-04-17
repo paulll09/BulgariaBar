@@ -31,7 +31,7 @@ function resizeImage(file) {
 }
 
 
-const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
+import { BUSINESS_ID } from '../../lib/config';
 const EMPTY_FORM = { name: '', description: '', price: '', category_id: '', image_url: '', discount: 0, variants: [] };
 
 export default function AdminProducts() {

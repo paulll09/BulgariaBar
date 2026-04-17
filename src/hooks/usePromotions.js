@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
+import { BUSINESS_ID } from '../lib/config';
 
 /**
  * Fetches promotions from Supabase.

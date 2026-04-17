@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { dummyProducts, dummyCategories } from '../data/dummyMenu';
 
-const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
+import { BUSINESS_ID } from '../lib/config';
 
 const isSupabaseConfigured = () => {
     const url = import.meta.env.VITE_SUPABASE_URL;

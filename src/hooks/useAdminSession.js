@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 const IDLE_TIMEOUT = 15 * 60 * 1000;
-const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
+import { BUSINESS_ID } from '../lib/config';
 const IDLE_EVENTS = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
 
 export function useAdminSession() {

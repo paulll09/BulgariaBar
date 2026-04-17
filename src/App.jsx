@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useState, useEffect, useMemo, useContext, lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/layout/Layout';
 import { AdminErrorBoundary } from './components/admin/AdminErrorBoundary';
@@ -10,24 +10,18 @@ import Cart from './components/cart/Cart';
 import ReservationPage from './pages/ReservationPage';
 import { OverlayCtx } from './context/overlayCtx';
 import { BarCtx } from './context/barCtx';
+import { FeaturesCtx } from './context/featuresCtx';
 import { useSchedule } from './hooks/useSchedule';
 import { useAdminSession } from './hooks/useAdminSession';
 import { ConfirmProvider } from './components/ui/ConfirmDialog';
 
-const Login = lazy(() => import('./components/admin/Login'));
-const Dashboard = lazy(() => import('./components/admin/Dashboard'));
-const AdminProducts = lazy(() => import('./components/admin/AdminProducts'));
+const Login           = lazy(() => import('./components/admin/Login'));
+const Dashboard       = lazy(() => import('./components/admin/Dashboard'));
+const AdminProducts   = lazy(() => import('./components/admin/AdminProducts'));
 const AdminCategories = lazy(() => import('./components/admin/AdminCategories'));
-const AdminHours = lazy(() => import('./components/admin/AdminHours'));
-const AdminQR = lazy(() => import('./components/admin/AdminQR'));
+const AdminHours      = lazy(() => import('./components/admin/AdminHours'));
+const AdminQR         = lazy(() => import('./components/admin/AdminQR'));
 const AdminPromotions = lazy(() => import('./components/admin/AdminPromotions'));
-
-function ProtectedRoute({ children }) {
-  const status = useAdminSession();
-  if (status === 'checking') return <AdminFallback />;
-  if (status === 'denied') return null;
-  return children;
-}
 
 const AdminFallback = () => (
   <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-pulse">
@@ -40,20 +34,38 @@ const AdminFallback = () => (
   </div>
 );
 
+function ProtectedRoute({ children }) {
+  const status = useAdminSession();
+  if (status === 'checking') return <AdminFallback />;
+  if (status === 'denied') return null;
+  return children;
+}
+
+function FeatureRoute({ feature, fallback = '/', children }) {
+  const features = useContext(FeaturesCtx);
+  if (!features[feature]) return <Navigate to={fallback} replace />;
+  return children;
+}
+
+const adminWrapper = (children) => (
+  <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">{children}</div>
+);
+
 function App() {
   const [loading, setLoading] = useState(true);
   const [overlayActive, setOverlayActive] = useState(false);
-  const { isOpen, schedule } = useSchedule();
+  const { isOpen, schedule, features } = useSchedule();
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 2200);
     return () => clearTimeout(t);
   }, []);
 
-  const barCtxValue = useMemo(() => ({ isOpen, schedule, appLoading: loading }), [isOpen, schedule, loading]);
+  const barCtxValue     = useMemo(() => ({ isOpen, schedule, appLoading: loading }), [isOpen, schedule, loading]);
   const overlayCtxValue = useMemo(() => ({ active: overlayActive, setActive: setOverlayActive }), [overlayActive]);
 
   return (
+    <FeaturesCtx.Provider value={features}>
     <BarCtx.Provider value={barCtxValue}>
     <OverlayCtx.Provider value={overlayCtxValue}>
     <ConfirmProvider>
@@ -64,48 +76,35 @@ function App() {
         <AdminErrorBoundary>
         <Suspense fallback={<AdminFallback />}>
           <Routes>
+            {/* Públicas */}
             <Route path="/" element={<HomePage />} />
-            <Route path="/reserva" element={<ReservationPage />} />
             <Route path="/cart" element={
-              <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
-                <Cart />
-              </div>
+              <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6"><Cart /></div>
             } />
-            <Route path="/admin" element={
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-                <Login />
-              </div>
+
+            {/* Feature: reservas (cliente) */}
+            <Route path="/reserva" element={
+              <FeatureRoute feature="reservations"><ReservationPage /></FeatureRoute>
             } />
-            <Route path="/admin/dashboard" element={
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-                <ProtectedRoute><Dashboard /></ProtectedRoute>
-              </div>
-            } />
-            <Route path="/admin/products" element={
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-                <ProtectedRoute><AdminProducts /></ProtectedRoute>
-              </div>
-            } />
-            <Route path="/admin/categories" element={
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-                <ProtectedRoute><AdminCategories /></ProtectedRoute>
-              </div>
-            } />
-            <Route path="/admin/hours" element={
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-                <ProtectedRoute><AdminHours /></ProtectedRoute>
-              </div>
-            } />
-            <Route path="/admin/qr" element={
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-                <ProtectedRoute><AdminQR /></ProtectedRoute>
-              </div>
-            } />
-            <Route path="/admin/promotions" element={
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-                <ProtectedRoute><AdminPromotions /></ProtectedRoute>
-              </div>
-            } />
+
+            {/* Admin — público */}
+            <Route path="/admin" element={adminWrapper(<Login />)} />
+
+            {/* Admin — protegidas */}
+            <Route path="/admin/dashboard"  element={adminWrapper(<ProtectedRoute><Dashboard /></ProtectedRoute>)} />
+            <Route path="/admin/products"   element={adminWrapper(<ProtectedRoute><AdminProducts /></ProtectedRoute>)} />
+            <Route path="/admin/categories" element={adminWrapper(<ProtectedRoute><AdminCategories /></ProtectedRoute>)} />
+            <Route path="/admin/hours"      element={adminWrapper(<ProtectedRoute><AdminHours /></ProtectedRoute>)} />
+            <Route path="/admin/qr"         element={adminWrapper(<ProtectedRoute><AdminQR /></ProtectedRoute>)} />
+
+            {/* Admin — rutas premium */}
+            <Route path="/admin/promotions" element={adminWrapper(
+              <ProtectedRoute>
+                <FeatureRoute feature="promotions" fallback="/admin/dashboard">
+                  <AdminPromotions />
+                </FeatureRoute>
+              </ProtectedRoute>
+            )} />
           </Routes>
         </Suspense>
         </AdminErrorBoundary>
@@ -126,18 +125,15 @@ function App() {
             boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             maxWidth: '380px',
           },
-          success: {
-            iconTheme: { primary: '#d90009', secondary: '#fff' },
-          },
-          error: {
-            iconTheme: { primary: '#d90009', secondary: '#fff' },
-          },
+          success: { iconTheme: { primary: '#d90009', secondary: '#fff' } },
+          error:   { iconTheme: { primary: '#d90009', secondary: '#fff' } },
         }}
       />
     </BrowserRouter>
     </ConfirmProvider>
     </OverlayCtx.Provider>
     </BarCtx.Provider>
+    </FeaturesCtx.Provider>
   );
 }
 

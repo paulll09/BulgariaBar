@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { ADMIN_EMAIL } from '../../lib/config';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -27,7 +28,7 @@ export default function Login() {
         e.preventDefault();
         setLoading(true);
 
-        const email = import.meta.env.VITE_ADMIN_EMAIL;
+        const email = ADMIN_EMAIL;
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
             toast.error(traducirError(error.message));

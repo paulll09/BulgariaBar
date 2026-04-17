@@ -33,7 +33,7 @@ function resizeImage(file) {
     });
 }
 
-const BUSINESS_ID = import.meta.env.VITE_BUSINESS_ID;
+import { BUSINESS_ID } from '../../lib/config';
 const EMPTY_FORM = { title: '', image_url: '', days: [], display_order: 0 };
 
 export default function AdminPromotions() {
