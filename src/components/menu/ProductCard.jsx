@@ -25,7 +25,7 @@ export default function ProductCard({ product, categoryName }) {
         const effectivePrice = getEffectiveVariantPrice(variant);
         addItem(
             { ...product, category_name: categoryName },
-            { ...variant, price: effectivePrice }
+            { ...variant, price: effectivePrice, originalPrice: variant.price }
         );
         toast.success(`${product.name} (${variant.name}) agregado`);
     };

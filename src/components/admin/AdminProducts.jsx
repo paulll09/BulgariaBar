@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect, useDeferredValue } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit2, Trash2, Eye, EyeOff, X, Upload, Image as ImageIcon, Search } from 'lucide-react';
@@ -44,16 +44,28 @@ export default function AdminProducts() {
     );
     const [search, setSearch] = useState('');
     const [filterCat, setFilterCat] = useState('');
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 10;
+
+    const deferredSearch = useDeferredValue(search);
 
     const filteredProducts = useMemo(() => {
         let list = products;
         if (filterCat) list = list.filter(p => p.category_id === filterCat);
-        if (search.trim()) {
-            const q = search.trim().toLowerCase();
+        if (deferredSearch.trim()) {
+            const q = deferredSearch.trim().toLowerCase();
             list = list.filter(p => p.name.toLowerCase().includes(q));
         }
         return list;
-    }, [products, search, filterCat]);
+    }, [products, deferredSearch, filterCat]);
+
+    const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+    const paginatedProducts = useMemo(
+        () => filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+        [filteredProducts, page]
+    );
+
+    useEffect(() => setPage(1), [deferredSearch, filterCat]);
 
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -399,11 +411,19 @@ export default function AdminProducts() {
                         <div key={i} className="h-20 rounded-2xl bg-surface animate-pulse" />
                     ))
                 ) : filteredProducts.length === 0 ? (
-                    <div className="py-16 text-center text-text-muted text-sm">
-                        {products.length === 0 ? 'No hay productos. Creá el primero.' : 'No se encontraron productos.'}
+                    <div className="py-16 text-center flex flex-col items-center gap-3">
+                        <ImageIcon className="w-10 h-10 text-text-dim opacity-40" />
+                        <p className="text-text-muted text-sm">
+                            {products.length === 0 ? 'No hay productos todavía.' : 'No se encontraron productos.'}
+                        </p>
+                        {products.length === 0 && (
+                            <button onClick={openCreate} className="cursor-pointer mt-1 px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold uppercase tracking-widest">
+                                Crear primer producto
+                            </button>
+                        )}
                     </div>
                 ) : (
-                    filteredProducts.map((product) => {
+                    paginatedProducts.map((product) => {
                         const catName = categoryMap.get(product.category_id);
                         return (
                             <div
@@ -474,11 +494,21 @@ export default function AdminProducts() {
                                     </td></tr>
                                 ))
                             ) : filteredProducts.length === 0 ? (
-                                <tr><td colSpan="6" className="p-10 text-center text-text-muted text-sm">
-                                    {products.length === 0 ? 'No hay productos. Creá el primero.' : 'No se encontraron productos.'}
+                                <tr><td colSpan="6" className="p-10 text-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <ImageIcon className="w-10 h-10 text-text-dim opacity-40" />
+                                        <p className="text-text-muted text-sm">
+                                            {products.length === 0 ? 'No hay productos todavía.' : 'No se encontraron productos.'}
+                                        </p>
+                                        {products.length === 0 && (
+                                            <button onClick={openCreate} className="cursor-pointer mt-1 px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold uppercase tracking-widest">
+                                                Crear primer producto
+                                            </button>
+                                        )}
+                                    </div>
                                 </td></tr>
                             ) : (
-                                filteredProducts.map((product) => (
+                                paginatedProducts.map((product) => (
                                     <tr key={product.id} className={`transition-colors hover:bg-surface/50 ${!product.visible ? 'opacity-50' : ''}`}>
                                         <td className="p-4">
                                             <div className="w-12 h-12 rounded-xl bg-surface overflow-hidden border border-border flex items-center justify-center">
@@ -523,6 +553,39 @@ export default function AdminProducts() {
                     </table>
                 </div>
             </div>
+
+            {/* ── Pagination ── */}
+            {!loading && totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-4">
+                    <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="cursor-pointer px-3 py-1.5 rounded-lg border border-border text-sm text-text-muted disabled:opacity-30 hover:border-primary/40 transition-colors"
+                    >
+                        ←
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                        <button
+                            key={n}
+                            onClick={() => setPage(n)}
+                            className={`cursor-pointer w-8 h-8 rounded-lg text-sm font-semibold transition-colors ${
+                                n === page
+                                    ? 'bg-primary text-white'
+                                    : 'border border-border text-text-muted hover:border-primary/40'
+                            }`}
+                        >
+                            {n}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="cursor-pointer px-3 py-1.5 rounded-lg border border-border text-sm text-text-muted disabled:opacity-30 hover:border-primary/40 transition-colors"
+                    >
+                        →
+                    </button>
+                </div>
+            )}
 
             {/* ── Product Form — Full Screen (portal to escape animate-fade-up transform) ── */}
             {modalOpen && createPortal(

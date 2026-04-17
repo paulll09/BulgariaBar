@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { supabase } from './lib/supabase';
 import Layout from './components/layout/Layout';
 import { AdminErrorBoundary } from './components/admin/AdminErrorBoundary';
 import ScrollToTop from './components/layout/ScrollToTop';
@@ -12,6 +11,7 @@ import ReservationPage from './pages/ReservationPage';
 import { OverlayCtx } from './context/overlayCtx';
 import { BarCtx } from './context/barCtx';
 import { useSchedule } from './hooks/useSchedule';
+import { useAdminSession } from './hooks/useAdminSession';
 import { ConfirmProvider } from './components/ui/ConfirmDialog';
 
 const Login = lazy(() => import('./components/admin/Login'));
@@ -23,26 +23,8 @@ const AdminQR = lazy(() => import('./components/admin/AdminQR'));
 const AdminPromotions = lazy(() => import('./components/admin/AdminPromotions'));
 
 function ProtectedRoute({ children }) {
-  const [status, setStatus] = useState('checking');
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setStatus('ok');
-      else { setStatus('denied'); navigate('/admin'); }
-    });
-  }, []);
-
-  if (status === 'checking') return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-pulse">
-      <div className="h-8 w-48 bg-gray-200 rounded-lg mb-6" />
-      <div className="space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-14 bg-gray-100 rounded-xl" />
-        ))}
-      </div>
-    </div>
-  );
+  const status = useAdminSession();
+  if (status === 'checking') return <AdminFallback />;
   if (status === 'denied') return null;
   return children;
 }

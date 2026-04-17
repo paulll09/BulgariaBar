@@ -235,6 +235,9 @@ export default function Cart() {
                             </label>
                             <input type="text" name="name" value={checkoutForm.name} onChange={handleChange}
                                 placeholder="Ej: Juan Pérez" className={inputCls(formErrors.name)} />
+                            {formErrors.name && (
+                                <p className="text-primary text-xs mt-1">Nombre es obligatorio</p>
+                            )}
                         </div>
 
                         {/* Dirección + geolocalización — solo para envío */}
@@ -247,25 +250,35 @@ export default function Cart() {
                                     </label>
                                     <input type="text" name="address" value={checkoutForm.address} onChange={handleChange}
                                         placeholder="Ej: Calle Paraguay 1234" className={inputCls(formErrors.address)} />
+                                    {formErrors.address && (
+                                        <p className="text-primary text-xs mt-1">Dirección es obligatoria para envío</p>
+                                    )}
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={handleGetLocation}
-                                    disabled={geoStatus === 'loading'}
-                                    className={`cursor-pointer flex items-center justify-center gap-2 w-full py-3 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all border ${
-                                        geoStatus === 'granted'
-                                            ? 'border-green-500/40 bg-green-500/10 text-green-600'
-                                            : geoStatus === 'error'
-                                            ? 'border-primary/30 bg-primary/5 text-primary'
-                                            : 'border-border bg-cream text-text-muted hover:text-text hover:border-text-dim'
-                                    }`}
-                                >
-                                    <LocateFixed className="w-3.5 h-3.5" />
-                                    {geoStatus === 'loading' ? 'Obteniendo ubicación…'
-                                        : geoStatus === 'granted' ? 'Ubicación obtenida ✓'
-                                        : geoStatus === 'error' ? 'No se pudo obtener la ubicación'
-                                        : 'Compartir mi ubicación actual'}
-                                </button>
+                                <div>
+                                    <button
+                                        type="button"
+                                        onClick={handleGetLocation}
+                                        disabled={geoStatus === 'loading'}
+                                        className={`cursor-pointer flex items-center justify-center gap-2 w-full py-3 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all border ${
+                                            geoStatus === 'granted'
+                                                ? 'border-green-500/40 bg-green-500/10 text-green-600'
+                                                : geoStatus === 'error'
+                                                ? 'border-primary/30 bg-primary/5 text-primary'
+                                                : 'border-border bg-cream text-text-muted hover:text-text hover:border-text-dim'
+                                        }`}
+                                    >
+                                        <LocateFixed className="w-3.5 h-3.5" />
+                                        {geoStatus === 'loading' ? 'Obteniendo ubicación…'
+                                            : geoStatus === 'granted' ? 'Ubicación obtenida ✓'
+                                            : geoStatus === 'error' ? 'No se pudo obtener la ubicación'
+                                            : 'Compartir ubicación exacta (opcional)'}
+                                    </button>
+                                    {geoStatus === 'idle' && (
+                                        <p className="text-[10px] text-text-dim mt-1.5 text-center">
+                                            Tu ubicación GPS se enviará junto al pedido por WhatsApp
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -311,9 +324,6 @@ export default function Cart() {
                                 <span className="font-display font-bold text-text text-4xl leading-none">{totalPrice.toLocaleString('es-AR')}</span>
                             </div>
                         </div>
-                        {(formErrors.name || formErrors.address) && (
-                            <p className="text-primary text-xs font-semibold mb-4 text-center">Completá los campos requeridos (*)</p>
-                        )}
                         <button onClick={handleCheckout}
                             className="cursor-pointer w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-2xl font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2.5 transition-colors active:scale-[0.98] shadow-[0_4px_16px_rgba(217,0,9,0.25)]">
                             <MessageCircle className="w-[18px] h-[18px]" />
@@ -325,11 +335,6 @@ export default function Cart() {
                         )}
                     </div>
 
-                    {(formErrors.name || formErrors.address) && (
-                        <div className="sm:hidden pt-4 border-t border-border">
-                            <p className="text-primary text-xs font-semibold text-center">Completá los campos requeridos (*)</p>
-                        </div>
-                    )}
                 </div>
             )}
 

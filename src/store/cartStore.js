@@ -29,7 +29,7 @@ export const useCartStore = create(
                             variantId: variant?.id || null,
                             variantName: variant?.name || null,
                             price: variant ? variant.price : product.price,
-                            originalPrice: variant ? variant.price : product.price,
+                            originalPrice: variant ? (variant.originalPrice ?? variant.price) : product.price,
                             variantDiscount: variant?.discount || 0,
                             quantity: 1,
                         }],
