@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCartStore } from '../../store/cartStore';
 import { WHATSAPP_PHONE } from '../../lib/config';
+import { openWhatsApp } from '../../lib/whatsapp';
 import { Minus, Plus, Trash2, ArrowLeft, MessageCircle, User, MapPin, CreditCard, AlignLeft, Wine, Store, Truck, LocateFixed, Image as ImageIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -70,8 +71,7 @@ export default function Cart() {
         const labels = { efectivo: 'Efectivo', transferencia: 'Transferencia' };
         text += `💳 *Pago:* ${labels[checkoutForm.paymentMethod]}\n`;
         if (checkoutForm.notes.trim()) text += `📝 *Aclaraciones:* ${checkoutForm.notes.trim()}\n`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
-        clearCart();
+        openWhatsApp(phone, text, clearCart);
     };
 
     /* ── Empty ───────────────────────────────── */

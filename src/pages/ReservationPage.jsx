@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, User, Users, Calendar, Clock, MessageCircle, Info } from 'lucide-react';
 import { BarCtx } from '../context/barCtx';
 import { WHATSAPP_PHONE } from '../lib/config';
+import { openWhatsApp } from '../lib/whatsapp';
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -74,7 +75,7 @@ export default function ReservationPage() {
         text += `*Dia:* ${dateStr}\n`;
         text += `*Horario:* ${form.time} hs\n`;
         text += `\nPor favor, confirmen disponibilidad. Gracias!`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+        openWhatsApp(phone, text);
     };
 
     const today = new Date().toISOString().split('T')[0];
